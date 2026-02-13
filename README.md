@@ -3,7 +3,7 @@
 공문 주제를 입력하면 공문 기본 형식(수신/제목/본문/붙임/끝.)으로 초안을 자동 생성하고 즉시 복사할 수 있는 정적 웹앱입니다.
 
 ## 주요 기능
-- 공문 주제 입력 시 초안 자동 생성
+- 공문 주제 입력 시 AI 기반 초안 자동 생성
 - 수신/발신/시행일/본문/붙임 항목 커스터마이징
 - 클립보드 복사 버튼 제공
 
@@ -27,6 +27,16 @@ npm run deploy:prod
 ```
 
 `official-letter-helper` 프로젝트 이름이 이미 존재하지 않으면 Cloudflare에서 새 Pages 프로젝트로 생성됩니다.
+
+### 4) AI 연동 환경변수 설정 (필수)
+Cloudflare Pages 프로젝트 설정에서 아래 변수를 추가해야 AI 생성이 동작합니다.
+
+- `OPENAI_API_KEY`: OpenAI API 키
+- `OPENAI_MODEL`(선택): 기본값 `gpt-5`
+
+설정 경로:
+- Cloudflare Dashboard > `Workers & Pages` > 프로젝트 > `Settings` > `Variables and Secrets`
+- `Production`/`Preview` 환경 모두 설정 권장
 
 ## GitHub 연동 배포(권장)
 Cloudflare 대시보드에서 `Workers & Pages` > `Create application` > `Pages` > `Connect to Git`로 이 저장소를 연결하면, `main` 브랜치 푸시 시 자동 배포됩니다.
