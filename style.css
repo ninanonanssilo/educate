@@ -41,6 +41,7 @@ body {
 
 .hero,
 .page,
+.official-links,
 .footer {
   width: min(1140px, 92%);
   margin-left: auto;
@@ -198,6 +199,68 @@ button.primary:hover {
   font-weight: 700;
 }
 
+.official-links {
+  margin-top: 16px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 12px 28px rgba(17, 43, 68, 0.08);
+}
+
+.official-links h2 {
+  margin: 0 0 8px;
+}
+
+.official-desc {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.link-card {
+  background: #f7fbff;
+  border: 1px solid #d8e6f3;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.link-card h3 {
+  margin: 0 0 8px;
+}
+
+.link-card p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #415565;
+}
+
+.link-card a {
+  display: inline-block;
+  text-decoration: none;
+  color: #fff;
+  background: var(--brand);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.link-card a:hover {
+  background: var(--brand-dark);
+}
+
+.link-stack {
+  display: grid;
+  gap: 8px;
+}
+
 .footer {
   margin-top: 8px;
   margin-bottom: 28px;
@@ -223,6 +286,9 @@ button.primary:hover {
 
 @media (max-width: 920px) {
   .page {
+    grid-template-columns: 1fr;
+  }
+  .link-grid {
     grid-template-columns: 1fr;
   }
 }
