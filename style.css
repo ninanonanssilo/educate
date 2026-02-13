@@ -108,6 +108,8 @@ button.primary:hover {
 .result {
   min-height: 290px;
   white-space: pre;
+  color: #6f7b86;
+  font-weight: 400;
 }
 
 .status {

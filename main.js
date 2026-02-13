@@ -48,7 +48,7 @@ function setDefaultDate() {
 
 function renderDocument() {
   const subject = subjectInput.value.trim() || "공문 제목을 입력하세요";
-  const recipient = recipientInput.value.trim() || "수신처를 입력하세요";
+  const recipient = recipientInput.value.trim() || "내부결재";
   const sender = senderInput.value.trim() || "발신 기관을 입력하세요";
   const date = formatDate(dateInput.value);
   const details = detailsInput.value.trim();
