@@ -1,0 +1,14 @@
+{
+  "name": "official-letter-helper",
+  "private": true,
+  "version": "1.0.0",
+  "description": "공문 자동 작성 도우미",
+  "scripts": {
+    "dev": "wrangler pages dev .",
+    "deploy": "wrangler pages deploy .",
+    "deploy:prod": "wrangler pages deploy . --project-name=official-letter-helper --branch=main"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
