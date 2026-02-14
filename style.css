@@ -137,6 +137,18 @@ h3 {
   justify-content: flex-end;
 }
 
+.btn-stack {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.template-actions button {
+  white-space: nowrap;
+}
+
 .field {
   display: grid;
   gap: 6px;

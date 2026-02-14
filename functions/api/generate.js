@@ -81,6 +81,7 @@ export async function onRequestPost(context) {
       return json({ error: "Empty AI response." }, 500);
     }
 
+    document = normalizeRelatedSection(document, related).trim();
     document = normalizeAttachmentSection(document, attachments).trim();
 
     return json({ document }, 200);
@@ -168,7 +169,7 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     `- 수신: ${recipient}`,
     `- 경유: ${via || "미기재"}`,
     `- 제목: ${subject}`,
-    `- 관련: ${relatedInput}`,
+    `- 관련(선택): ${relatedInput}`,
     `- 시행일: ${date || "오늘 날짜 형식 유지"}`,
     `- 발신: ${sender}`,
     `- 문서번호: ${docno || "미기재"}`,
@@ -190,10 +191,11 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "  다. ...",
     "",
     "관련 표기 규칙:",
-    "- 관련이 0개면 '관련' 줄을 쓰지 말 것.",
-    "- 관련이 있으면 제목 아래에 다음 형식으로만 표기:",
-    "  관련  <내용>",
-    "  관련  1. <내용>",
+    "- 관련이 0개면 '관련'을 쓰지 말 것.",
+    "- 관련이 있으면 '제목' 바로 아래(공문 주제 밑)에만 배치.",
+    "- 표기 형식은 다음 중 하나만 사용:",
+    "  관련: <내용>",
+    "  관련: 1. <내용>",
     "        2. <내용>",
     "- 관련 내용은 입력값을 그대로 사용하고 임의로 생성/추가하지 말 것.",
     "",
@@ -267,6 +269,86 @@ function normalizeAttachmentSection(documentText, attachments) {
   }
 
   return joinWithFooter(contentLines, footerRegion);
+}
+
+function normalizeRelatedSection(documentText, related) {
+  const list = Array.isArray(related) ? related : [];
+  const cleaned = list.map((x) => sanitizeRelatedItem(x)).filter(Boolean);
+
+  const lines = String(documentText || "").split("\n");
+  if (!lines.length) {
+    return String(documentText || "");
+  }
+
+  // Remove an existing related block (if any) right after the title line.
+  const titleIdx = lines.findIndex((l) => String(l || "").trim().startsWith("제목"));
+  if (titleIdx < 0) {
+    return String(documentText || "");
+  }
+
+  // Identify and remove "관련" lines between title and the first body item / attachments / blank gap.
+  const out = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (i <= titleIdx) {
+      out.push(lines[i]);
+      continue;
+    }
+
+    // Stop filtering when the body starts.
+    const trimmed = String(lines[i] || "").trim();
+    const isBodyStart = /^\d+\.\s/.test(trimmed) || trimmed.startsWith("붙임") || trimmed.startsWith("끝.");
+    if (isBodyStart) {
+      out.push(...lines.slice(i));
+      break;
+    }
+
+    // Drop related lines only in the header region.
+    if (trimmed.startsWith("관련")) {
+      continue;
+    }
+
+    out.push(lines[i]);
+  }
+
+  if (!cleaned.length) {
+    return out.join("\n");
+  }
+
+  // Insert related immediately under the title line (before the blank line).
+  const insertAt = out.findIndex((_, idx) => idx > titleIdx && String(out[idx] || "").trim() === "");
+  const at = insertAt >= 0 ? insertAt : titleIdx + 1;
+  const relatedLines = buildRelatedLines(cleaned);
+  out.splice(at, 0, ...relatedLines);
+
+  return out.join("\n");
+}
+
+function buildRelatedLines(cleanedItems) {
+  const items = Array.isArray(cleanedItems) ? cleanedItems : [];
+  if (!items.length) return [];
+
+  if (items.length === 1) {
+    return [`관련: ${items[0]}`];
+  }
+
+  const indent = "        ";
+  const out = [];
+  out.push(`관련: 1. ${items[0]}`);
+  for (let i = 1; i < items.length; i += 1) {
+    out.push(`${indent}${i + 1}. ${items[i]}`);
+  }
+  return out;
+}
+
+function sanitizeRelatedItem(value) {
+  let text = String(value || "").trim();
+  if (!text) return "";
+
+  // Normalize common user prefixes.
+  text = text.replace(/^관련\s*[:：]?\s*/g, "");
+  text = text.replace(/^\d+\.\s*/g, "");
+  text = text.trim();
+  return text;
 }
 
 function joinWithFooter(contentLines, footerLines) {
