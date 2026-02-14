@@ -4,7 +4,7 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
     const apiKey = env.OPENAI_API_KEY;
-    const model = env.OPENAI_MODEL || "gpt-5";
+    const model = env.OPENAI_MODEL || "gpt-4o-mini";
 
     if (!apiKey) {
       return json(

@@ -32,7 +32,7 @@ form.addEventListener("submit", async (event) => {
     result.value = aiText.trim();
     setStatus("AI 공문 생성이 완료되었습니다.");
   } catch (error) {
-    setStatus("AI 생성에 실패했습니다. 잠시 후 다시 시도하거나 관리자에게 AI 키 설정을 요청하세요.");
+    setStatus(error.message || "AI 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
   } finally {
     setLoading(false);
   }
@@ -77,13 +77,18 @@ async function generateDocumentWithAI(data) {
     body: JSON.stringify(data),
   });
 
+  const json = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+    if (json.error && String(json.error).includes("OPENAI_API_KEY")) {
+      throw new Error("AI 키가 설정되지 않았습니다. Cloudflare Pages의 Variables/Secrets에 OPENAI_API_KEY를 추가해 주세요.");
+    }
+
+    throw new Error(`AI 생성 실패: ${json.error || response.status}`);
   }
 
-  const json = await response.json();
   if (!json.document) {
-    throw new Error("No document");
+    throw new Error("AI 응답에서 공문 본문을 받지 못했습니다.");
   }
 
   return json.document;
