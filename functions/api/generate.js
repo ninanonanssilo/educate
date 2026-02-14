@@ -575,6 +575,8 @@ function normalizeBodyIndentation(documentText) {
   const out = [];
   let prevPrefixLen = 0;
   let prevWasMarker = false;
+  let inAttachmentBlock = false;
+  const ATTACHMENT_NUM_INDENT = "      "; // keep aligned with buildAttachmentLines()
 
   for (let i = 0; i < headerAndBody.length; i += 1) {
     let raw = String(headerAndBody[i] || "");
@@ -585,6 +587,49 @@ function normalizeBodyIndentation(documentText) {
       out.push(raw);
       prevPrefixLen = 0;
       prevWasMarker = false;
+      // keep attachment block until we actually see non-attachment content,
+      // because attachments typically appear at the end.
+      continue;
+    }
+
+    // Attachment block handling:
+    // Once "붙임" is seen, do not normalize away leading spaces on numbered lines.
+    if (trimmed.startsWith("붙임")) {
+      inAttachmentBlock = true;
+      out.push(raw);
+      const m = trimmed.match(/^붙임\s+\d+\.\s+/);
+      prevPrefixLen = m ? m[0].length : 0;
+      prevWasMarker = true;
+      continue;
+    }
+
+    if (inAttachmentBlock) {
+      // If the model printed "2. ..." without indent, enforce indent in plain text output.
+      if (/^\d+\.\s+/.test(trimmed) && !/^\s+\d+\.\s+/.test(raw)) {
+        out.push(`${ATTACHMENT_NUM_INDENT}${trimmed}`);
+        prevPrefixLen = (ATTACHMENT_NUM_INDENT + trimmed.match(/^\d+\.\s+/)[0]).length;
+        prevWasMarker = true;
+        continue;
+      }
+
+      // If it is already indented numbered attachment, keep as-is.
+      if (/^\s+\d+\.\s+/.test(raw)) {
+        out.push(raw);
+        prevPrefixLen = raw.match(/^\s*\d+\.\s+/)?.[0].length || 0;
+        prevWasMarker = true;
+        continue;
+      }
+
+      // Any other non-empty line means we're out of attachment block.
+      inAttachmentBlock = false;
+      // fallthrough to normal rules
+    }
+
+    // Preserve indented numbered lines (e.g., tables/continued formatting) as-is.
+    if (/^\s+\d+\.\s+/.test(raw)) {
+      out.push(raw);
+      prevPrefixLen = raw.match(/^\s*\d+\.\s+/)?.[0].length || 0;
+      prevWasMarker = true;
       continue;
     }
 
@@ -605,24 +650,6 @@ function normalizeBodyIndentation(documentText) {
       raw = `  ${sub[1]}. ${trimmed.replace(/^([가-하])\.\s+/, "")}`;
       out.push(raw);
       prevPrefixLen = `  ${sub[1]}. `.length;
-      prevWasMarker = true;
-      continue;
-    }
-
-    // Attachment lines: keep as-is, but set continuation indent to align after marker.
-    const isAttachment = trimmed.startsWith("붙임");
-    const attNum = trimmed.match(/^(\d+)\.\s+/);
-    if (isAttachment) {
-      out.push(raw);
-      const m = trimmed.match(/^붙임\s+\d+\.\s+/);
-      prevPrefixLen = m ? m[0].length : 0;
-      prevWasMarker = true;
-      continue;
-    }
-    if (!isAttachment && attNum && /^\s+\d+\.\s+/.test(raw)) {
-      // Indented attachment item "  2. ..." keep but align to its own prefix.
-      out.push(raw);
-      prevPrefixLen = raw.match(/^\s*\d+\.\s+/)?.[0].length || 0;
       prevWasMarker = true;
       continue;
     }
