@@ -52,7 +52,8 @@ body {
 .page,
 .official-links,
 .footer {
-  width: min(1140px, 92%);
+  /* Wider canvas so both "작성" and "생성 결과" panels can breathe on desktop. */
+  width: min(1320px, 96%);
   margin-left: auto;
   margin-right: auto;
 }
