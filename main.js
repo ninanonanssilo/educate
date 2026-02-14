@@ -12,8 +12,6 @@ const docnoInput = document.getElementById("docno");
 const ownerInput = document.getElementById("owner");
 const contactInput = document.getElementById("contact");
 const relatedInput = document.getElementById("related");
-const templateMajorSelect = document.getElementById("template-major");
-const templateMidSelect = document.getElementById("template-mid");
 const templateSelect = document.getElementById("template");
 const applyTemplateBtn = document.getElementById("apply-template-btn");
 const resetBtn = document.getElementById("reset-btn");
@@ -24,7 +22,6 @@ const statusText = document.getElementById("status");
 const submitButton = form.querySelector("button[type='submit']");
 
 const STORAGE_KEY = "official_letter_helper_form_v1";
-const MAJOR_ORDER = ["교무", "연구", "과학", "정보", "생활", "행정", "보건", "급식"];
 const DEFAULTS = {
   recipient: "내부결재",
   sender: "00초등학교장",
@@ -1219,8 +1216,8 @@ downloadBtn.addEventListener("click", () => {
 applyTemplateBtn.addEventListener("click", () => {
   const id = String(templateSelect.value || "");
   if (!id) {
-    setStatus("적용할 템플릿을 선택하세요. (대주제 -> 중주제 -> 소주제)");
-    (templateMajorSelect || templateSelect).focus();
+    setStatus("적용할 템플릿을 선택하세요.");
+    templateSelect.focus();
     return;
   }
 
@@ -1262,17 +1259,6 @@ resetBtn.addEventListener("click", () => {
   clearFormState();
   setStatus("입력값을 초기화했습니다.");
   subjectInput.focus();
-});
-
-templateMajorSelect.addEventListener("change", () => {
-  rebuildMidOptions();
-  rebuildTemplateOptions();
-  persistFormState();
-});
-
-templateMidSelect.addEventListener("change", () => {
-  rebuildTemplateOptions();
-  persistFormState();
 });
 
 templateSelect.addEventListener("change", () => {
@@ -1367,21 +1353,36 @@ function disableResultDragDrop() {
 }
 
 function initTemplates() {
-  // 3-level picker: major -> mid -> template
+  // Single picker grouped by category (optgroup).
   // Preserve the first "선택 안 함" option and rebuild the rest.
-  while (templateMajorSelect.options.length > 1) {
-    templateMajorSelect.remove(1);
+  while (templateSelect.options.length > 1) {
+    templateSelect.remove(1);
   }
 
-  for (const major of MAJOR_ORDER) {
-    const opt = document.createElement("option");
-    opt.value = major;
-    opt.textContent = major;
-    templateMajorSelect.appendChild(opt);
+  const groups = new Map();
+  for (const tpl of TEMPLATES) {
+    const category = String(tpl.category || "기타");
+    if (!groups.has(category)) {
+      groups.set(category, []);
+    }
+    groups.get(category).push(tpl);
   }
 
-  rebuildMidOptions();
-  rebuildTemplateOptions();
+  const categories = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "ko"));
+  for (const category of categories) {
+    const list = groups.get(category).slice().sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
+    const optgroup = document.createElement("optgroup");
+    optgroup.label = category;
+
+    for (const tpl of list) {
+      const opt = document.createElement("option");
+      opt.value = tpl.id;
+      opt.textContent = tpl.label;
+      optgroup.appendChild(opt);
+    }
+
+    templateSelect.appendChild(optgroup);
+  }
 }
 
 function buildFilename(payload) {
@@ -1406,8 +1407,6 @@ function wireAutoSave() {
     ownerInput,
     contactInput,
     relatedInput,
-    templateMajorSelect,
-    templateMidSelect,
     templateSelect,
     result,
   ];
@@ -1440,8 +1439,6 @@ function persistFormState() {
     owner: ownerInput.value,
     contact: contactInput.value,
     related: relatedInput.value,
-    templateMajor: templateMajorSelect.value,
-    templateMid: templateMidSelect.value,
     templateId: templateSelect.value,
     result: result.value,
   };
@@ -1473,30 +1470,10 @@ function restoreFormState() {
     if (typeof state.owner === "string") ownerInput.value = state.owner;
     if (typeof state.contact === "string") contactInput.value = state.contact;
     if (typeof state.related === "string") relatedInput.value = state.related;
-
-    // Backward compat:
-    // - older versions used templateMajor + templateSub + template
-    // - current version uses templateMajor + templateMid + templateSub + templateId
-    const major = typeof state.templateMajor === "string" ? state.templateMajor : "";
-    let mid = typeof state.templateMid === "string" ? state.templateMid : "";
     const templateId =
       typeof state.templateId === "string"
         ? state.templateId
         : (typeof state.template === "string" ? state.template : "");
-
-    // If mid is missing but we have an older "templateSub", treat it as mid.
-    const legacySub = typeof state.templateSub === "string" ? state.templateSub : "";
-    if (!mid && legacySub) {
-      mid = legacySub;
-    }
-
-    if (major) templateMajorSelect.value = major;
-    rebuildMidOptions();
-    rebuildTemplateOptions();
-
-    if (mid) templateMidSelect.value = mid;
-    rebuildTemplateOptions();
-
     if (templateId) templateSelect.value = templateId;
     if (typeof state.result === "string") result.value = state.result;
   } catch {
@@ -1509,161 +1486,5 @@ function clearFormState() {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
     // Ignore.
-  }
-}
-
-function buildMajorCounts() {
-  const counts = new Map();
-  for (const m of MAJOR_ORDER) counts.set(m, 0);
-  for (const tpl of TEMPLATES) {
-    const c = classifyTemplate(tpl);
-    counts.set(c.major, (counts.get(c.major) || 0) + 1);
-  }
-  return counts;
-}
-
-function classifyTemplate(tpl) {
-  const category = String(tpl?.category || "").trim();
-  const label = String(tpl?.label || "").trim();
-  const id = String(tpl?.id || "").trim();
-
-  let major = "교무";
-
-  const has = (s) => category.includes(s) || label.includes(s);
-  const hasAny = (arr) => arr.some((s) => category.includes(s) || label.includes(s) || id.includes(s));
-
-  if (has("급식")) major = "급식";
-  else if (has("보건") || hasAny(["infection", "health", "influenza", "fine-dust"])) major = "보건";
-  else if (has("정보") || has("보안") || hasAny(["neis", "device", "privacy"])) major = "정보";
-  else if (has("시설") || has("행정") || has("예산") || has("구매") || has("위원회") || has("기록") || has("정보공개") || has("보고") || has("조사") || has("대외") || has("인사") || has("복무") || has("환경")) major = "행정";
-  else if (has("과학") || hasAny(["science", "lab"])) major = "과학";
-  else if (has("연수") || has("연구") || has("장학") || hasAny(["training", "research"])) major = "연구";
-  else if (has("생활") || has("상담") || has("학생자치") || hasAny(["bullying"])) major = "생활";
-
-  const parts = category ? category.split("/").map((x) => x.trim()).filter(Boolean) : [];
-  const filtered = parts.filter((p) => !MAJOR_ORDER.includes(p) && p !== major);
-
-  let mid = "기타";
-  let sub = "기타";
-  if (filtered.length === 1) {
-    mid = filtered[0];
-  } else if (filtered.length >= 2) {
-    mid = filtered[0];
-    sub = filtered.slice(1).join("/");
-  } else if (parts.length === 1 && parts[0] && parts[0] !== major) {
-    mid = parts[0];
-  }
-
-  return { major, mid, sub };
-}
-
-function rebuildMidOptions() {
-  const major = String(templateMajorSelect.value || "");
-
-  while (templateMidSelect.options.length > 1) templateMidSelect.remove(1);
-  while (templateSelect.options.length > 1) templateSelect.remove(1);
-
-  templateMidSelect.value = "";
-  templateSelect.value = "";
-
-  const mids = new Set();
-  for (const tpl of TEMPLATES) {
-    const c = classifyTemplate(tpl);
-    if (!major || c.major === major) mids.add(c.mid);
-  }
-
-  const midList = Array.from(mids).sort((a, b) => a.localeCompare(b, "ko"));
-  for (const mid of midList) {
-    const opt = document.createElement("option");
-    opt.value = mid;
-    opt.textContent = mid;
-    templateMidSelect.appendChild(opt);
-  }
-
-  templateMidSelect.disabled = false;
-}
-
-function rebuildTemplateOptions() {
-  const major = String(templateMajorSelect.value || "");
-  const mid = String(templateMidSelect.value || "");
-
-  while (templateSelect.options.length > 1) templateSelect.remove(1);
-  templateSelect.value = "";
-
-  // Major not selected: show ALL templates, optionally filtered by mid.
-  // Group by major/mid for scanability.
-  if (!major) {
-    const groups = new Map(); // major -> mid -> [tpl]
-    for (const tpl of TEMPLATES) {
-      const c = classifyTemplate(tpl);
-      if (mid && c.mid !== mid) continue;
-      if (!groups.has(c.major)) groups.set(c.major, new Map());
-      const mids = groups.get(c.major);
-      if (!mids.has(c.mid)) mids.set(c.mid, []);
-      mids.get(c.mid).push(tpl);
-    }
-
-    for (const m of MAJOR_ORDER) {
-      const mids = groups.get(m);
-      if (!mids) continue;
-      const midKeys = Array.from(mids.keys()).sort((a, b) => a.localeCompare(b, "ko"));
-      for (const mk of midKeys) {
-        const optgroup = document.createElement("optgroup");
-        optgroup.label = `${m} / ${mk}`;
-        const list = mids.get(mk).slice().sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
-        for (const tpl of list) {
-          const opt = document.createElement("option");
-          opt.value = tpl.id;
-          opt.textContent = tpl.label;
-          optgroup.appendChild(opt);
-        }
-        templateSelect.appendChild(optgroup);
-      }
-    }
-
-    return;
-  }
-
-  // Major selected, mid not selected: show all templates under major grouped by mid.
-  if (!mid) {
-    const mids = new Map(); // mid -> [tpl]
-    for (const tpl of TEMPLATES) {
-      const c = classifyTemplate(tpl);
-      if (c.major !== major) continue;
-      if (!mids.has(c.mid)) mids.set(c.mid, []);
-      mids.get(c.mid).push(tpl);
-    }
-
-    const midKeys = Array.from(mids.keys()).sort((a, b) => a.localeCompare(b, "ko"));
-    for (const mk of midKeys) {
-      const optgroup = document.createElement("optgroup");
-      optgroup.label = mk;
-      const list = mids.get(mk).slice().sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
-      for (const tpl of list) {
-        const opt = document.createElement("option");
-        opt.value = tpl.id;
-        opt.textContent = tpl.label;
-        optgroup.appendChild(opt);
-      }
-      templateSelect.appendChild(optgroup);
-    }
-
-    return;
-  }
-
-  // Major + mid selected: show only matching templates (no grouping).
-  const items = TEMPLATES
-    .filter((tpl) => {
-      const c = classifyTemplate(tpl);
-      return c.major === major && c.mid === mid;
-    })
-    .slice()
-    .sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
-
-  for (const tpl of items) {
-    const opt = document.createElement("option");
-    opt.value = tpl.id;
-    opt.textContent = tpl.label;
-    templateSelect.appendChild(opt);
   }
 }

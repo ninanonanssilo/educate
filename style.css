@@ -115,19 +115,13 @@ h3 {
 
 .template-row {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 10px;
   align-items: end;
   padding: 12px;
   border: 1px dashed rgba(25, 145, 106, 0.35);
   border-radius: 14px;
   background: rgba(25, 145, 106, 0.05);
-}
-
-.template-pickers {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.6fr;
-  gap: 10px;
 }
 
 .template-label {
@@ -433,9 +427,6 @@ button.primary:hover {
     grid-template-columns: 1fr;
   }
   .template-row {
-    grid-template-columns: 1fr;
-  }
-  .template-pickers {
     grid-template-columns: 1fr;
   }
   .template-actions {
