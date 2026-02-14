@@ -209,9 +209,9 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "붙임 표기 규칙:",
     "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
     "- 붙임이 1개면 한 줄에 표기하고 같은 줄 끝에 '  끝.'(끝 앞 공백 2칸)를 표기: '붙임 <항목>.  끝.'",
-    "- 붙임이 여러 개면 다음 형식만 사용(첫 줄에 '붙임 1.'을 쓰고, 다음 줄부터 번호를 들여써서 나열):",
-    "  붙임 1. <항목>.",
-    "     2. <항목>.  끝.",
+    "- 붙임이 여러 개면 다음 형식만 사용('붙임' 뒤 2타 띄우고 1번부터 표기, 다음 줄은 번호가 1과 같은 위치에서 시작):",
+    "  붙임  1. <항목>.",
+    "      2. <항목>.  끝.",
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
     "- 붙임 항목 각 줄은 마침표(.)로 끝나게 할 것.",
     `- ${attachmentSentenceRule}`,
@@ -224,8 +224,8 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "- 붙임 없음: (붙임 줄 생략) 본문 마지막 문장 끝에 '  끝.' 표기",
     "- 붙임 1개: 붙임 운영 계획(안) 1부.  끝.",
     "- 붙임 여러 개:",
-    "  붙임 1. 운영 계획(안) 1부.",
-    "     2. 학년별 운영 시간표 1부.  끝.",
+    "  붙임  1. 운영 계획(안) 1부.",
+    "      2. 학년별 운영 시간표 1부.  끝.",
     "",
     "발신  ...",
     "시행일  ...",
@@ -513,11 +513,13 @@ function buildAttachmentLines(attachments) {
     return [`붙임 ${ensurePeriod(cleaned[0])}${END_MARK}`];
   }
 
-  // Align numbering column under "1." of "붙임 1." (plain-text approximation).
-  // User expectation: "붙임 1" next line starts like "     2" (5 spaces).
-  const indent = "     "; // 5 spaces
+  // PDF 규칙(붙임 표시문 다음 2타 띄움):
+  // - 첫 줄: "붙임␠␠1. ..."
+  // - 다음 줄: 번호가 1과 같은 위치(= "붙임␠␠" 길이만큼 공백)에서 시작
+  const prefix = "붙임  "; // 붙임 + 공백 2칸
+  const indent = "    "; // plain-text에서 "붙임  "에 대응하는 들여쓰기(가시성/정렬용)
   const out = [];
-  out.push(`붙임 1. ${ensurePeriod(cleaned[0])}`);
+  out.push(`${prefix}1. ${ensurePeriod(cleaned[0])}`);
 
   for (let i = 1; i < cleaned.length; i += 1) {
     let line = `${indent}${i + 1}. ${ensurePeriod(cleaned[i])}`;
