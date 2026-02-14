@@ -226,6 +226,8 @@ h3 {
   justify-content: center;
   white-space: normal;
   min-width: 0;
+  width: auto;
+  justify-self: stretch;
 }
 
 .field {
@@ -617,8 +619,30 @@ button.ghost {
   .grid-2 {
     grid-template-columns: 1fr;
   }
-  .template-row .template-btn {
-    width: 100%;
+  /* Narrow phones (e.g. iPhone 13 mini): stack action buttons to avoid overflow. */
+  .template-row {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+  }
+
+  .template-pickers {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .template-apply {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .template-reset {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .template-hint {
+    grid-column: 1;
+    grid-row: 4;
   }
   /* Mobile: prevent right-side clipping by stacking title and actions. */
   .preview-top {

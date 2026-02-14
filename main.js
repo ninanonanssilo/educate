@@ -1149,6 +1149,7 @@ if (!dateInput.value) {
 setStatus("주제를 입력한 뒤 공문 생성을 누르면 AI가 전체 공문을 작성합니다.");
 wireAutoSave();
 disableResultDragDrop();
+wireResultEditorKeys();
 wireTemplateSearch();
 updateTemplateSearchHint(templateSearchInput ? templateSearchInput.value : "");
 
@@ -1354,6 +1355,110 @@ function disableResultDragDrop() {
   result.addEventListener("dragstart", (e) => e.preventDefault());
   result.addEventListener("dragover", (e) => e.preventDefault());
   result.addEventListener("drop", (e) => e.preventDefault());
+}
+
+function wireResultEditorKeys() {
+  const INDENT = "  "; // 2 spaces; matches common 공문 들여쓰기
+
+  const replaceSelection = (text) => {
+    const start = result.selectionStart;
+    const end = result.selectionEnd;
+    const before = result.value.slice(0, start);
+    const after = result.value.slice(end);
+    result.value = before + text + after;
+    const next = start + text.length;
+    result.selectionStart = next;
+    result.selectionEnd = next;
+    // Trigger autosave wiring.
+    result.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+
+  const lineStartIndex = (value, idx) => value.lastIndexOf("\n", Math.max(0, idx - 1)) + 1;
+  const lineEndIndex = (value, idx) => {
+    const end = value.indexOf("\n", idx);
+    return end === -1 ? value.length : end;
+  };
+
+  const getBlockBounds = (value, start, end) => {
+    const bStart = lineStartIndex(value, start);
+    const bEnd = lineEndIndex(value, end);
+    return [bStart, bEnd];
+  };
+
+  const indentLine = (line) => INDENT + line;
+  const outdentLine = (line) => {
+    if (line.startsWith(INDENT)) return line.slice(INDENT.length);
+    if (line.startsWith("\t")) return line.slice(1);
+    if (line.startsWith(" ")) return line.slice(1);
+    return line;
+  };
+
+  result.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+
+      const value = result.value;
+      const start = result.selectionStart;
+      const end = result.selectionEnd;
+
+      // Multi-line (or any) selection: indent/outdent per line.
+      if (start !== end) {
+        const [bStart, bEnd] = getBlockBounds(value, start, end);
+        const block = value.slice(bStart, bEnd);
+        const lines = block.split("\n");
+        const nextLines = e.shiftKey ? lines.map(outdentLine) : lines.map(indentLine);
+        const nextBlock = nextLines.join("\n");
+
+        result.value = value.slice(0, bStart) + nextBlock + value.slice(bEnd);
+        result.selectionStart = bStart;
+        result.selectionEnd = bStart + nextBlock.length;
+        result.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+      }
+
+      // Single caret: indent/outdent current line.
+      const ls = lineStartIndex(value, start);
+      const le = lineEndIndex(value, start);
+      const line = value.slice(ls, le);
+
+      if (e.shiftKey) {
+        const nextLine = outdentLine(line);
+        const removed = line.length - nextLine.length;
+        result.value = value.slice(0, ls) + nextLine + value.slice(le);
+        const nextPos = Math.max(ls, start - removed);
+        result.selectionStart = nextPos;
+        result.selectionEnd = nextPos;
+        result.dispatchEvent(new Event("input", { bubbles: true }));
+        return;
+      }
+
+      // Insert indent at caret.
+      replaceSelection(INDENT);
+      return;
+    }
+
+    if (e.key === "Enter") {
+      // Keep the indentation of the current line on newline, like an editor.
+      e.preventDefault();
+
+      const value = result.value;
+      const start = result.selectionStart;
+      const end = result.selectionEnd;
+      const ls = lineStartIndex(value, start);
+      const le = lineEndIndex(value, start);
+      const line = value.slice(ls, le);
+      const indent = (line.match(/^[ \t]+/) || [""])[0];
+
+      const before = value.slice(0, start);
+      const after = value.slice(end);
+      const insert = `\n${indent}`;
+      result.value = before + insert + after;
+      const nextPos = start + insert.length;
+      result.selectionStart = nextPos;
+      result.selectionEnd = nextPos;
+      result.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  });
 }
 
 function initTemplates() {
