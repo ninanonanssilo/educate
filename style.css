@@ -125,12 +125,25 @@ button {
   font: inherit;
 }
 
-input,
+input:not([type="checkbox"]),
 textarea {
   border: 1px solid var(--line);
   border-radius: 11px;
   padding: 10px 12px;
   background: #fff;
+}
+
+label.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+label.checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
 }
 
 textarea {
