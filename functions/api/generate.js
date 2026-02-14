@@ -209,9 +209,9 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "붙임 표기 규칙:",
     "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
     "- 붙임이 1개면 한 줄에 표기하고 같은 줄 끝에 '  끝.'(끝 앞 공백 2칸)를 표기: '붙임 <항목>.  끝.'",
-    "- 붙임이 여러 개면 다음 형식만 사용('붙임' 뒤 2타 띄우고 1번부터 표기, 다음 줄은 번호가 1과 같은 위치에서 시작):",
-    "  붙임  1. <항목>.",
-    "      2. <항목>.  끝.",
+    "- 붙임이 여러 개면 다음 형식만 사용(복사/붙여넣기 시 줄맞춤을 위해 탭(\\t)으로 정렬):",
+    "  붙임\\t1. <항목>.",
+    "  \\t2. <항목>.  끝.",
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
     "- 붙임 항목 각 줄은 마침표(.)로 끝나게 할 것.",
     `- ${attachmentSentenceRule}`,
@@ -224,8 +224,8 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "- 붙임 없음: (붙임 줄 생략) 본문 마지막 문장 끝에 '  끝.' 표기",
     "- 붙임 1개: 붙임 운영 계획(안) 1부.  끝.",
     "- 붙임 여러 개:",
-    "  붙임  1. 운영 계획(안) 1부.",
-    "      2. 학년별 운영 시간표 1부.  끝.",
+    "  붙임\t1. 운영 계획(안) 1부.",
+    "  \t2. 학년별 운영 시간표 1부.  끝.",
     "",
     "발신  ...",
     "시행일  ...",
@@ -513,13 +513,11 @@ function buildAttachmentLines(attachments) {
     return [`붙임 ${ensurePeriod(cleaned[0])}${END_MARK}`];
   }
 
-  // PDF 규칙(붙임 표시문 다음 2타 띄움):
-  // - 첫 줄: "붙임␠␠1. ..."
-  // - 다음 줄: 번호가 1과 같은 위치(= "붙임␠␠" 길이만큼 공백)에서 시작
-  const prefix = "붙임  "; // 붙임 + 공백 2칸
-  // textarea/monospace에서 한글이 보통 전각(2칸)으로 잡히는 점을 감안해
-  // "붙임(전각 2자=4칸) + 공백 2칸" => 총 6칸 들여쓰기로 정렬한다.
-  const indent = "      "; // 6 spaces
+  // 줄맞춤(복붙 안정)을 위해 탭을 사용한다.
+  // - 첫 줄: "붙임\t1. ..."
+  // - 다음 줄: "\t2. ..." (번호가 1과 같은 열에서 시작)
+  const prefix = "붙임\t";
+  const indent = "\t";
   const out = [];
   out.push(`${prefix}1. ${ensurePeriod(cleaned[0])}`);
 
@@ -576,7 +574,7 @@ function normalizeBodyIndentation(documentText) {
   let prevPrefixLen = 0;
   let prevWasMarker = false;
   let inAttachmentBlock = false;
-  const ATTACHMENT_NUM_INDENT = "      "; // keep aligned with buildAttachmentLines()
+  const ATTACHMENT_NUM_INDENT = "\t"; // tab alignment for copy/paste into HWP/HWPX
 
   for (let i = 0; i < headerAndBody.length; i += 1) {
     let raw = String(headerAndBody[i] || "");
@@ -596,6 +594,8 @@ function normalizeBodyIndentation(documentText) {
     // Once "붙임" is seen, do not normalize away leading spaces on numbered lines.
     if (trimmed.startsWith("붙임")) {
       inAttachmentBlock = true;
+      // Normalize "붙임  1." or "붙임 1." into "붙임\t1." for stable alignment.
+      raw = raw.replace(/^(\s*)붙임\s+\d+\.\s+/, "$1붙임\t" + trimmed.replace(/^붙임\s+\d+\.\s+/, "").replace(/^/, "1. ").replace(/^1\.\s+/, "1. "));
       out.push(raw);
       const m = trimmed.match(/^붙임\s+\d+\.\s+/);
       prevPrefixLen = m ? m[0].length : 0;
@@ -612,10 +612,10 @@ function normalizeBodyIndentation(documentText) {
         continue;
       }
 
-      // If it is already indented numbered attachment, keep as-is.
+      // If it is already indented numbered attachment, normalize leading whitespace to a single tab.
       if (/^\s+\d+\.\s+/.test(raw)) {
-        out.push(raw);
-        prevPrefixLen = raw.match(/^\s*\d+\.\s+/)?.[0].length || 0;
+        out.push(`${ATTACHMENT_NUM_INDENT}${trimmed}`);
+        prevPrefixLen = (ATTACHMENT_NUM_INDENT + trimmed.match(/^\d+\.\s+/)[0]).length;
         prevWasMarker = true;
         continue;
       }
