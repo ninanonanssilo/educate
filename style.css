@@ -36,7 +36,7 @@ body {
 }
 
 html {
-  overflow-x: hidden; /* iOS에서 body가 아닌 html이 스크롤 컨테이너가 되는 경우 방지 */
+  overflow-x: hidden; /* 기본 fallback */
   -webkit-text-size-adjust: 100%;
 }
 
@@ -55,6 +55,14 @@ body {
   overflow-x: hidden;
 }
 
+/* Prefer clip when available (iOS/Safari): prevents the "right gray gutter" overflow artifact. */
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
+}
+
 .hero,
 .page,
 .official-links,
@@ -65,8 +73,8 @@ body {
   margin-left: auto;
   margin-right: auto;
   /* iOS/인앱브라우저 safe-area + 좁은 화면에서 잘림 방지 */
-  padding-left: max(10px, env(safe-area-inset-left));
-  padding-right: max(10px, env(safe-area-inset-right));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
 }
 
 .hero {
