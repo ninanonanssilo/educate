@@ -42,15 +42,12 @@ body {
   -webkit-text-size-adjust: 100%;
   word-break: keep-all; /* 기본 텍스트는 어절 단위로 줄바꿈 */
   overflow-wrap: break-word; /* 긴 문자열(URL 등)은 예외적으로 줄바꿈 */
-  /* iOS/인앱브라우저 safe-area + 미세 오버플로 방지 */
-  padding-left: max(10px, env(safe-area-inset-left));
-  padding-right: max(10px, env(safe-area-inset-right));
   background:
     radial-gradient(circle at 85% 8%, rgba(31, 111, 184, 0.16) 0%, rgba(31, 111, 184, 0) 38%),
     radial-gradient(circle at 6% 26%, rgba(25, 145, 106, 0.14) 0%, rgba(25, 145, 106, 0) 36%),
     linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 100%);
   min-height: 100vh;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 .hero,
@@ -62,6 +59,9 @@ body {
   max-width: 1320px;
   margin-left: auto;
   margin-right: auto;
+  /* iOS/인앱브라우저 safe-area + 좁은 화면에서 잘림 방지 */
+  padding-left: max(10px, env(safe-area-inset-left));
+  padding-right: max(10px, env(safe-area-inset-right));
 }
 
 .hero {
@@ -149,6 +149,7 @@ h3 {
   border-radius: 14px;
   background: rgba(25, 145, 106, 0.05);
   min-width: 0;
+  max-width: 100%;
 }
 
 .template-pickers {
@@ -159,6 +160,7 @@ h3 {
   gap: 10px;
   align-items: end;
   min-width: 0;
+  max-width: 100%;
 }
 
 .template-search-wrap {
@@ -601,6 +603,27 @@ button.ghost {
   .template-row {
     padding: 10px;
     gap: 10px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+  }
+  .template-pickers {
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-columns: 1fr;
+  }
+  .template-apply {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+  }
+  .template-reset {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+  }
+  .template-hint {
+    grid-column: 1;
+    grid-row: 4;
   }
   .template-row input[type="search"],
   .template-row select,
