@@ -69,10 +69,7 @@ export async function onRequestPost(context) {
       return json({ error: "Empty AI response." }, 500);
     }
 
-    // 규정/관행상 '붙임'이 없으면 붙임 구역을 아예 표기하지 않는 형태로 정리한다.
-    if (attachments.length === 0) {
-      document = stripAttachmentBlock(document).trim();
-    }
+    document = normalizeAttachmentSection(document, attachments).trim();
 
     return json({ document }, 200);
   } catch (error) {
@@ -138,7 +135,7 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments, u
       `- ${minimalSentence}`,
       "3) 붙임 표기 규칙:",
       "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
-      "- 붙임이 1개면 '붙임  1. <항목>' 1줄만 표기.",
+      "- 붙임이 1개면 번호 없이 '붙임  <항목>' 1줄만 표기.",
       "- 붙임이 여러 개면 '붙임' 아래에 1., 2., 3. ...으로 줄바꿈하여 모두 표기.",
       "- 붙임 항목 문구는 입력값을 그대로 사용(임의 생성/수정 금지).",
       "4) 마크다운/코드블록/설명문은 절대 출력하지 말 것.",
@@ -173,12 +170,13 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments, u
     "",
     "붙임 표기 규칙:",
     "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
-    "- 붙임이 1개면 '붙임  1. <항목>' 1줄만 표기.",
+    "- 붙임이 1개면 번호 없이 '붙임  <항목>' 1줄만 표기.",
     "- 붙임이 여러 개면 '붙임' 아래에 1., 2., 3. ...으로 줄바꿈하여 모두 표기.",
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
     `- ${attachmentSentenceRule}`,
     "",
     "붙임(표기 예시)",
+    "붙임  운영 계획(안) 1부",
     "붙임  1. 운영 계획(안) 1부",
     "      2. 학년별 운영 시간표 1부",
     "끝.",
@@ -216,6 +214,68 @@ function stripAttachmentBlock(documentText) {
   }
 
   return out.join("\n");
+}
+
+function normalizeAttachmentSection(documentText, attachments) {
+  const list = Array.isArray(attachments) ? attachments : [];
+  const count = list.length;
+  let text = String(documentText || "");
+
+  if (count === 0) {
+    return stripAttachmentBlock(text);
+  }
+
+  if (count === 1) {
+    // If AI outputs "붙임  1. ..." or multiple attachment lines, normalize to a single line:
+    // "붙임  <항목>"
+    const item = String(list[0] || "").trim();
+    if (!item) {
+      return stripAttachmentBlock(text);
+    }
+
+    const lines = text.split("\n");
+    const out = [];
+    let inAttachment = false;
+    let wrote = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      if (!inAttachment && trimmed.startsWith("붙임")) {
+        inAttachment = true;
+        if (!wrote) {
+          out.push(`붙임  ${item}`);
+          wrote = true;
+        }
+        continue;
+      }
+
+      if (inAttachment) {
+        if (trimmed === "끝." || trimmed.startsWith("끝.")) {
+          out.push(line);
+          inAttachment = false;
+        }
+        continue;
+      }
+
+      out.push(line);
+    }
+
+    // If AI didn't include any attachment section but attachments exist, append before "끝." if present.
+    if (!wrote) {
+      const idx = out.findIndex((l) => String(l).trim() === "끝." || String(l).trim().startsWith("끝."));
+      if (idx >= 0) {
+        out.splice(idx, 0, `붙임  ${item}`);
+      } else {
+        out.push(`붙임  ${item}`);
+      }
+    }
+
+    return out.join("\n");
+  }
+
+  // count >= 2: keep as-is; prompt steers numbering and we don't want to over-correct.
+  return text;
 }
 
 function extractText(responseJson) {
