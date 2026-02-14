@@ -1163,7 +1163,8 @@ form.addEventListener("submit", async (event) => {
   try {
     const aiText = await generateDocumentWithAI(payload);
     result.value = aiText.trim();
-    setStatus("AI 공문 생성이 완료되었습니다.");
+    persistFormState();
+    setStatus("AI 공문 생성이 완료되었습니다. 결과를 필요에 맞게 수정한 뒤 복사/다운로드하세요.");
     result.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     setStatus(error.message || "AI 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
@@ -1388,6 +1389,7 @@ function wireAutoSave() {
     ownerInput,
     contactInput,
     templateSelect,
+    result,
   ];
 
   let timer = null;
@@ -1418,6 +1420,7 @@ function persistFormState() {
     owner: ownerInput.value,
     contact: contactInput.value,
     template: templateSelect.value,
+    result: result.value,
   };
 
   try {
@@ -1447,6 +1450,7 @@ function restoreFormState() {
     if (typeof state.owner === "string") ownerInput.value = state.owner;
     if (typeof state.contact === "string") contactInput.value = state.contact;
     if (typeof state.template === "string") templateSelect.value = state.template;
+    if (typeof state.result === "string") result.value = state.result;
   } catch {
     // Ignore parse/storage errors.
   }

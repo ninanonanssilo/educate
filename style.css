@@ -260,7 +260,7 @@ button.primary:hover {
   width: 100%;
   min-height: 430px;
   white-space: pre;
-  color: #718293;
+  color: var(--ink);
   font-weight: 400;
 }
 
