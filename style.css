@@ -126,7 +126,7 @@ h3 {
   display: grid;
   grid-template-columns: 1.55fr 0.85fr;
   gap: 10px;
-  align-items: end;
+  align-items: start;
   padding: 12px;
   border: 1px dashed rgba(25, 145, 106, 0.35);
   border-radius: 14px;
@@ -137,7 +137,7 @@ h3 {
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
   gap: 10px;
-  align-items: end;
+  align-items: start;
 }
 
 .template-search-wrap {
@@ -163,6 +163,7 @@ h3 {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  align-items: end;
 }
 
 .btn-stack {
@@ -175,6 +176,18 @@ h3 {
 
 .template-actions button {
   white-space: nowrap;
+}
+
+.template-row input[type="search"],
+.template-row select,
+.template-actions button {
+  height: 44px;
+}
+
+.template-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .field {
@@ -307,21 +320,22 @@ button.ghost {
 }
 
 .preview-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   margin-bottom: 10px;
 }
 
 .preview-top h2 {
   margin: 0;
+  min-width: 6ch;
 }
 
 .preview-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
@@ -523,9 +537,15 @@ button.ghost {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
-  .preview-top {
-    align-items: flex-start;
-    flex-direction: column;
+  .preview-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .preview-actions button {
+    width: 100%;
+    padding: 10px 8px;
   }
   .advanced-grid {
     grid-template-columns: 1fr;
