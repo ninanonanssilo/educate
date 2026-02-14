@@ -59,7 +59,7 @@ function collectFormData() {
   return {
     subject: subjectInput.value.trim(),
     recipient: recipientInput.value.trim() || "내부결재",
-    sender: senderInput.value.trim() || "판교대장초등학교장",
+    sender: senderInput.value.trim() || "00초등학교장",
     date: formatDate(dateInput.value),
     details: detailsInput.value.trim(),
     attachments: attachmentsInput.value

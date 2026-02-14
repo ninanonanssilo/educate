@@ -17,7 +17,7 @@ export async function onRequestPost(context) {
     const body = await request.json();
     const subject = String(body.subject || "").trim();
     const recipient = String(body.recipient || "내부결재").trim();
-    const sender = String(body.sender || "판교대장초등학교장").trim();
+    const sender = String(body.sender || "00초등학교장").trim();
     const date = String(body.date || "").trim();
     const details = String(body.details || "").trim();
     const attachments = Array.isArray(body.attachments) ? body.attachments : [];
