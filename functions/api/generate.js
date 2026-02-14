@@ -191,12 +191,10 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "  다. ...",
     "",
     "관련 표기 규칙:",
-    "- 관련이 0개면 '관련'을 쓰지 말 것.",
-    "- 관련이 있으면 '제목' 바로 아래(공문 주제 밑)에만 배치.",
-    "- 표기 형식은 다음 중 하나만 사용:",
-    "  관련: <내용>",
-    "  관련: 1. <내용>",
-    "        2. <내용>",
+    "- 관련이 0개면 '관련' 항목을 쓰지 말 것.",
+    "- 관련이 있으면 본문 첫 항목을 반드시 '1. 관련'으로 시작할 것(가장 먼저).",
+    "- 관련 문서는 '가./나./다.'처럼 소항목으로 나열할 것.",
+    "- 그 다음 본문 항목은 '2.', '3.' ...로 이어질 것.",
     "- 관련 내용은 입력값을 그대로 사용하고 임의로 생성/추가하지 말 것.",
     "",
     "붙임 표기 규칙:",
@@ -286,66 +284,160 @@ function normalizeRelatedSection(documentText, related) {
     return String(documentText || "");
   }
 
-  // Remove any existing related block right below the title line.
-  const out = lines.slice(0, titleIdx + 1);
-  let i = titleIdx + 1;
+  const header = lines.slice(0, titleIdx + 1);
+  const rest = lines.slice(titleIdx + 1);
+
+  // Strip "관련:" block (legacy style) directly under the title.
+  const strippedUnderTitle = stripLegacyRelatedUnderTitle(rest);
+
+  // Strip any top-level "1. 관련" section that the model may have produced.
+  let bodyLines = stripNumberedRelatedSection(strippedUnderTitle);
+
+  if (!cleaned.length) {
+    return [...header, ...bodyLines].join("\n");
+  }
+
+  // Insert "1. 관련" as the very first numbered section in the body.
+  const insertAt = findFirstTopLevelSectionIndex(bodyLines);
+  const before = insertAt >= 0 ? bodyLines.slice(0, insertAt) : bodyLines.slice();
+  const after = insertAt >= 0 ? bodyLines.slice(insertAt) : [];
+
+  const relatedSection = buildNumberedRelatedSection(cleaned);
+
+  // If the body already starts numbering at 1, shift it to start at 2.
+  const shiftedAfter = shouldShiftTopLevelNumbers(after) ? shiftTopLevelNumbers(after, 1) : after;
+
+  // Ensure a blank line separation like typical 공문 formatting.
+  const out = [];
+  out.push(...header);
+  out.push(...before);
+  if (out.length && out[out.length - 1].trim() !== "") out.push("");
+  out.push(...relatedSection);
+  out.push("");
+  out.push(...shiftedAfter);
+  return out.join("\n");
+}
+
+function stripLegacyRelatedUnderTitle(lines) {
+  const list = Array.isArray(lines) ? lines : [];
+  const out = [];
+  let i = 0;
   let removingRelated = false;
 
-  for (; i < lines.length; i += 1) {
-    const trimmed = String(lines[i] || "").trim();
+  for (; i < list.length; i += 1) {
+    const raw = String(list[i] || "");
+    const trimmed = raw.trim();
 
-    // Stop at the first blank line after the title (header/body separator).
-    if (trimmed === "") {
-      break;
+    // Stop stripping once we hit the normal header/body separator.
+    if (!removingRelated && trimmed === "") {
+      out.push(...list.slice(i));
+      return out;
     }
 
-    // Stop when the body/attachment starts.
-    const isBodyStart = /^\d+\.\s/.test(trimmed) || trimmed.startsWith("붙임") || trimmed.startsWith("끝.");
-    if (isBodyStart && !removingRelated) {
-      break;
-    }
-
-    // Detect the start of a related block.
-    if (trimmed.startsWith("관련")) {
+    // Detect the legacy "관련:" line.
+    if (!removingRelated && trimmed.startsWith("관련")) {
       removingRelated = true;
       continue;
     }
 
-    // Remove continuation lines of related block: indented numbered items.
-    if (removingRelated && /^\d+\.\s/.test(trimmed)) {
+    // Remove continuation lines for the legacy related block.
+    if (removingRelated) {
+      if (trimmed === "") {
+        removingRelated = false;
+        out.push(raw);
+        continue;
+      }
+
+      // Stop removing if we bumped into a top-level section or attachment.
+      const isBodyStart = /^\d+\.\s/.test(trimmed) || trimmed.startsWith("붙임") || trimmed.startsWith("끝.");
+      if (isBodyStart) {
+        removingRelated = false;
+        out.push(raw);
+      }
       continue;
     }
 
-    // If we were removing related but hit another header line, stop removing.
-    removingRelated = false;
-    out.push(lines[i]);
+    out.push(raw);
   }
 
-  if (!cleaned.length) {
-    out.push(...lines.slice(i));
-    return out.join("\n");
-  }
-
-  // Insert related immediately under the title line ("공문 주제" 밑).
-  out.push(...buildRelatedLines(cleaned));
-  out.push(...lines.slice(i));
-  return out.join("\n");
+  return out;
 }
 
-function buildRelatedLines(cleanedItems) {
+function stripNumberedRelatedSection(lines) {
+  const list = Array.isArray(lines) ? lines : [];
+  const out = [];
+
+  let i = 0;
+  while (i < list.length) {
+    const trimmed = String(list[i] || "").trim();
+    if (/^1\.\s*관련\b/.test(trimmed)) {
+      // Drop until next top-level section / attachment / footer marker.
+      i += 1;
+      for (; i < list.length; i += 1) {
+        const t = String(list[i] || "").trim();
+        if (/^\d+\.\s/.test(t) || t.startsWith("붙임") || t.startsWith("끝.") || t.startsWith("발신") || t.startsWith("시행일")) {
+          break;
+        }
+      }
+      continue;
+    }
+    out.push(list[i]);
+    i += 1;
+  }
+
+  return out;
+}
+
+function findFirstTopLevelSectionIndex(lines) {
+  const list = Array.isArray(lines) ? lines : [];
+  return list.findIndex((l) => /^\s*\d+\.\s+/.test(String(l || "").trim()));
+}
+
+function shouldShiftTopLevelNumbers(lines) {
+  const list = Array.isArray(lines) ? lines : [];
+  const nums = [];
+  for (const l of list) {
+    const m = String(l || "").trim().match(/^(\d+)\.\s+/);
+    if (m) nums.push(Number(m[1]));
+  }
+  if (!nums.length) return false;
+  return Math.min(...nums) === 1;
+}
+
+function shiftTopLevelNumbers(lines, delta) {
+  const list = Array.isArray(lines) ? lines : [];
+  const d = Number(delta) || 0;
+  if (!d) return list.slice();
+
+  return list.map((l) => {
+    const raw = String(l || "");
+    const trimmed = raw.trim();
+    const m = trimmed.match(/^(\d+)\.\s+/);
+    if (!m) return raw;
+
+    const n = Number(m[1]);
+    if (!Number.isFinite(n)) return raw;
+
+    const shifted = `${n + d}. `;
+    // Preserve leading spaces before the number, if any.
+    const leading = raw.match(/^\s*/)?.[0] || "";
+    const restText = trimmed.replace(/^(\d+)\.\s+/, "");
+    return `${leading}${shifted}${restText}`;
+  });
+}
+
+function buildNumberedRelatedSection(cleanedItems) {
   const items = Array.isArray(cleanedItems) ? cleanedItems : [];
   if (!items.length) return [];
 
-  if (items.length === 1) {
-    return [`관련: ${items[0]}`];
+  const labels = ["가", "나", "다", "라", "마", "바", "사", "아", "자", "차", "카", "타", "파", "하"];
+  const out = ["1. 관련"];
+
+  for (let i = 0; i < items.length; i += 1) {
+    const label = labels[i] || String(i + 1);
+    out.push(`  ${label}. ${items[i]}`);
   }
 
-  const indent = "        ";
-  const out = [];
-  out.push(`관련: 1. ${items[0]}`);
-  for (let i = 1; i < items.length; i += 1) {
-    out.push(`${indent}${i + 1}. ${items[i]}`);
-  }
   return out;
 }
 
