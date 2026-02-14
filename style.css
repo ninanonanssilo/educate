@@ -37,6 +37,7 @@ body {
 
 html {
   overflow-x: hidden; /* iOS에서 body가 아닌 html이 스크롤 컨테이너가 되는 경우 방지 */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -102,6 +103,16 @@ body {
   /* Widen the writer panel so the template controls don't protrude. */
   grid-template-columns: minmax(420px, 560px) minmax(0, 1fr);
   gap: var(--panel-gap);
+  /* iOS safe-area + 100vh 잘림 대응 */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100vh;
+}
+
+@supports (height: 100dvh) {
+  .page {
+    min-height: 100dvh;
+  }
 }
 
 .card {
@@ -399,7 +410,8 @@ button.ghost {
 .result {
   width: 100%;
   min-height: 560px;
-  white-space: pre;
+  /* 모바일/복사 환경에서 가로 오버플로우로 잘리는 것을 막기 위해 기본적으로 줄바꿈 허용 */
+  white-space: pre-wrap;
   color: var(--ink);
   font-weight: 400;
   line-height: 1.45;
@@ -410,6 +422,10 @@ button.ghost {
     Consolas,
     "D2Coding",
     monospace;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .status {
@@ -712,7 +728,10 @@ button.ghost {
   }
 }
 
-img {
+img,
+svg,
+video,
+canvas {
   max-width: 100%;
   height: auto;
   display: block;
