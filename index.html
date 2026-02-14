@@ -28,34 +28,81 @@
     <section class="card writer">
       <h2>공문 자동 작성</h2>
       <p class="description">주제와 핵심 내용을 입력하면 내부결재용 공문 초안이 바로 생성됩니다.</p>
+      <p class="helper" role="note">
+        개인정보(학생/학부모/교직원 실명, 연락처, 주민등록번호 등)는 입력하지 마세요. 민감 정보는 "홍길동(가명)"처럼 비식별 처리 후 작성하세요.
+      </p>
 
       <form id="doc-form" class="form">
-        <label>
-          공문 주제
-          <input id="subject" name="subject" type="text" placeholder="예: 2026학년도 학부모 공개수업 운영 계획" required />
-        </label>
-        <div class="grid-2">
-          <label>
-            수신(기본: 내부결재)
-            <input id="recipient" name="recipient" type="text" value="내부결재" />
+        <div class="template-row" aria-label="빠른 템플릿">
+          <label class="template-label">
+            빠른 템플릿
+            <select id="template" name="template">
+              <option value="">선택 안 함</option>
+            </select>
           </label>
-          <label>
-            시행일
-            <input id="date" name="date" type="date" />
-          </label>
+          <div class="template-actions">
+            <button type="button" id="apply-template-btn">템플릿 적용</button>
+            <button type="button" id="reset-btn">입력 초기화</button>
+          </div>
         </div>
-        <label>
-          발신 기관(부서)
-          <input id="sender" name="sender" type="text" value="00초등학교장" />
-        </label>
-        <label>
-          본문 핵심 내용
-          <textarea id="details" name="details" rows="3" placeholder="예: 일시, 장소, 대상, 협조 요청 사항"></textarea>
-        </label>
-        <label>
-          붙임 항목 (줄바꿈으로 구분)
-          <textarea id="attachments" name="attachments" rows="3" placeholder="예:&#10;운영 계획(안) 1부&#10;학년별 운영 시간표 1부"></textarea>
-        </label>
+
+        <label for="subject">공문 주제</label>
+        <input id="subject" name="subject" type="text" placeholder="예: 2026학년도 학부모 공개수업 운영 계획" required />
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="recipient">수신(기본: 내부결재)</label>
+            <input id="recipient" name="recipient" type="text" value="내부결재" />
+          </div>
+          <div class="field">
+            <label for="via">경유(선택)</label>
+            <input id="via" name="via" type="text" placeholder="예: 교무부장" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="date">시행일</label>
+            <input id="date" name="date" type="date" />
+          </div>
+          <div class="field">
+            <label for="sender">발신 기관(부서)</label>
+            <input id="sender" name="sender" type="text" value="00초등학교장" />
+          </div>
+        </div>
+
+        <label for="details">본문 핵심 내용</label>
+        <textarea id="details" name="details" rows="4" placeholder="예: 목적, 추진 내용, 협조 요청, 일정(미확정이면 '추후 안내'로)"></textarea>
+
+        <label for="attachments">붙임 항목 (줄바꿈으로 구분)</label>
+        <textarea id="attachments" name="attachments" rows="3" placeholder="예:&#10;운영 계획(안) 1부&#10;학년별 운영 시간표 1부"></textarea>
+
+        <details class="advanced">
+          <summary>고급 옵션 (선택)</summary>
+          <div class="advanced-grid">
+            <div class="field">
+              <label for="tone">문체</label>
+              <select id="tone" name="tone">
+                <option value="default" selected>기본(행정 문체)</option>
+                <option value="concise">간결</option>
+                <option value="friendly">친절</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="docno">문서번호(선택)</label>
+              <input id="docno" name="docno" type="text" placeholder="예: 2026-교무-001" />
+            </div>
+            <div class="field">
+              <label for="owner">담당자(선택)</label>
+              <input id="owner" name="owner" type="text" placeholder="예: 홍길동" />
+            </div>
+            <div class="field">
+              <label for="contact">연락처(선택)</label>
+              <input id="contact" name="contact" type="text" placeholder="예: 02-000-0000" inputmode="tel" />
+            </div>
+          </div>
+        </details>
+
         <label class="checkbox-row">
           <input id="use-attachment-phrase" name="useAttachmentPhrase" type="checkbox" checked />
           <span>붙임 문구 자동 삽입 ("붙임과 같이 시행하고자 합니다.")</span>
@@ -63,6 +110,8 @@
         <div class="actions">
           <button type="submit" class="primary">공문 생성</button>
           <button type="button" id="copy-btn">결과 복사</button>
+          <button type="button" id="download-btn">TXT 다운로드</button>
+          <button type="button" id="print-btn">인쇄</button>
         </div>
       </form>
     </section>

@@ -101,6 +101,66 @@ h3 {
   color: var(--muted);
 }
 
+.helper {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(31, 111, 184, 0.18);
+  background: rgba(31, 111, 184, 0.06);
+  color: #27465e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.template-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px dashed rgba(25, 145, 106, 0.35);
+  border-radius: 14px;
+  background: rgba(25, 145, 106, 0.05);
+}
+
+.template-label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.template-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.advanced {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fbfdff;
+}
+
+.advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #27465e;
+}
+
+.advanced-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .form {
   display: grid;
   gap: 12px;
@@ -121,16 +181,31 @@ label {
 
 input,
 textarea,
+select,
 button {
   font: inherit;
 }
 
 input:not([type="checkbox"]),
-textarea {
+textarea,
+select {
   border: 1px solid var(--line);
   border-radius: 11px;
   padding: 10px 12px;
   background: #fff;
+}
+
+select {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(27, 42, 57, 0.55) 50%),
+    linear-gradient(135deg, rgba(27, 42, 57, 0.55) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 13px) calc(50% - 3px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
 }
 
 label.checkbox-row {
@@ -152,6 +227,7 @@ textarea {
 
 input:focus,
 textarea:focus,
+select:focus,
 button:focus {
   outline: 2px solid rgba(25, 145, 106, 0.38);
   outline-offset: 1px;
@@ -280,6 +356,42 @@ button.primary:hover {
   }
 }
 
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .hero,
+  .writer,
+  .official-links,
+  .footer {
+    display: none !important;
+  }
+
+  .page {
+    grid-template-columns: 1fr;
+    width: 100%;
+    margin: 0;
+  }
+
+  .card {
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .result {
+    border: 0;
+    min-height: auto;
+    color: #000;
+  }
+
+  .status {
+    display: none;
+  }
+}
+
 @media (max-width: 920px) {
   .page {
     grid-template-columns: 1fr;
@@ -295,6 +407,16 @@ button.primary:hover {
     padding: 16px;
   }
   .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .template-row {
+    grid-template-columns: 1fr;
+  }
+  .template-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .advanced-grid {
     grid-template-columns: 1fr;
   }
   .actions {

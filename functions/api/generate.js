@@ -17,11 +17,16 @@ export async function onRequestPost(context) {
     const body = await request.json();
     const subject = String(body.subject || "").trim();
     const recipient = String(body.recipient || "내부결재").trim();
+    const via = String(body.via || "").trim();
     const sender = String(body.sender || "00초등학교장").trim();
     const date = String(body.date || "").trim();
     const details = String(body.details || "").trim();
     const attachments = Array.isArray(body.attachments) ? body.attachments : [];
     const useAttachmentPhrase = Boolean(body.useAttachmentPhrase);
+    const tone = String(body.tone || "default").trim();
+    const docno = String(body.docno || "").trim();
+    const owner = String(body.owner || "").trim();
+    const contact = String(body.contact || "").trim();
 
     if (!subject) {
       return json({ error: "subject is required." }, 400);
@@ -30,11 +35,16 @@ export async function onRequestPost(context) {
     const userPrompt = buildPrompt({
       subject,
       recipient,
+      via,
       sender,
       date,
       details,
       attachments,
       useAttachmentPhrase,
+      tone,
+      docno,
+      owner,
+      contact,
     });
 
     const response = await fetch(OPENAI_URL, {
@@ -115,7 +125,7 @@ function pickEulReul(text) {
   return /[bcdfghjklmnpqrstvwxz]$/i.test(value) ? "을" : "를";
 }
 
-function buildPrompt({ subject, recipient, sender, date, details, attachments, useAttachmentPhrase }) {
+function buildPrompt({ subject, recipient, via, sender, date, details, attachments, useAttachmentPhrase, tone, docno, owner, contact }) {
   const attachmentInput = attachments.length
     ? attachments.map((item, index) => `${index + 1}. ${item}`).join("\n")
     : "(없음)";
@@ -133,21 +143,40 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments, u
       : "핵심 내용이 비어 있으면, 제목(주제)을 바탕으로 목적/추진내용/협조사항을 결재 가능한 수준으로 2~4개 항목으로 구성하되, 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것."
     : "핵심 내용이 있으면 입력 내용을 우선 반영해 목적/추진내용/협조사항을 구체화할 것.";
 
+  const toneRule =
+    tone === "concise"
+      ? "문체는 간결하게(불필요한 수식 최소), 항목 수는 2~4개 수준으로 제한."
+      : tone === "friendly"
+        ? "문체는 공손하고 친절하게(안내/협조 요청 표현을 부드럽게) 작성."
+        : "문체는 일반적인 학교 행정 문체로 작성.";
+
+  const footerRule = [
+    "하단 표기 규칙:",
+    "- '발신'과 '시행일' 줄은 항상 포함.",
+    "- '문서번호/담당/연락처'는 입력값이 있을 때만 포함(없으면 줄 전체 생략).",
+    "- 문서번호/담당/연락처/발신/시행일은 입력값을 그대로 사용하고 임의로 생성하지 말 것.",
+  ].join("\n");
+
   return [
     "아래 정보를 바탕으로 한국 학교 내부결재용 공문을 작성해줘.",
     "",
     `[입력 정보]`,
     `- 수신: ${recipient}`,
+    `- 경유: ${via || "미기재"}`,
     `- 제목: ${subject}`,
     `- 시행일: ${date || "오늘 날짜 형식 유지"}`,
     `- 발신: ${sender}`,
+    `- 문서번호: ${docno || "미기재"}`,
+    `- 담당: ${owner || "미기재"}`,
+    `- 연락처: ${contact || "미기재"}`,
+    `- 문체: ${tone || "default"}`,
     `- 핵심 내용: ${details || "미기재"}`,
     `- 붙임: ${attachmentInput}`,
     "",
     "[작성 규칙]",
     "1) 반드시 다음 형식만 출력:",
     "수신  ...",
-    "(경유)",
+    "(경유) ...",
     "제목  ...",
     "",
     "1. ...",
@@ -162,6 +191,9 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments, u
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
     `- ${attachmentSentenceRule}`,
     `- ${detailsRule}`,
+    `- ${toneRule}`,
+    footerRule,
+    "- 경유가 '미기재'면 '(경유)' 줄은 '(경유)'만 출력하고 뒤에 내용을 채우지 말 것.",
     "",
     "붙임(표기 예시)",
     "붙임  운영 계획(안) 1부",
