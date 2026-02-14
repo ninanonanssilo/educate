@@ -24,6 +24,7 @@ const statusText = document.getElementById("status");
 const submitButton = form.querySelector("button[type='submit']");
 
 const STORAGE_KEY = "official_letter_helper_form_v1";
+const MAJOR_ORDER = ["교무", "연구", "과학", "정보", "생활", "행정", "보건", "급식"];
 const DEFAULTS = {
   recipient: "내부결재",
   sender: "00초등학교장",
@@ -1372,17 +1373,13 @@ function initTemplates() {
     templateMajorSelect.remove(1);
   }
 
-  const majorCounts = buildMajorCounts();
-  const majorList = MAJOR_ORDER.filter((m) => (majorCounts.get(m) || 0) > 0);
-
-  for (const major of majorList) {
+  for (const major of MAJOR_ORDER) {
     const opt = document.createElement("option");
     opt.value = major;
     opt.textContent = major;
     templateMajorSelect.appendChild(opt);
   }
 
-  templateMidSelect.disabled = true;
   rebuildMidOptions();
   rebuildTemplateOptions();
 }
@@ -1515,8 +1512,6 @@ function clearFormState() {
   }
 }
 
-const MAJOR_ORDER = ["교무", "연구", "과학", "정보", "생활", "행정", "보건", "급식"];
-
 function buildMajorCounts() {
   const counts = new Map();
   for (const m of MAJOR_ORDER) counts.set(m, 0);
@@ -1571,16 +1566,10 @@ function rebuildMidOptions() {
   templateMidSelect.value = "";
   templateSelect.value = "";
 
-  // If major is empty, keep mid disabled and allow templates to show "전체".
-  if (!major) {
-    templateMidSelect.disabled = true;
-    return;
-  }
-
   const mids = new Set();
   for (const tpl of TEMPLATES) {
     const c = classifyTemplate(tpl);
-    if (c.major === major) mids.add(c.mid);
+    if (!major || c.major === major) mids.add(c.mid);
   }
 
   const midList = Array.from(mids).sort((a, b) => a.localeCompare(b, "ko"));
@@ -1601,12 +1590,13 @@ function rebuildTemplateOptions() {
   while (templateSelect.options.length > 1) templateSelect.remove(1);
   templateSelect.value = "";
 
-  // Major not selected: show ALL templates in the 3rd dropdown.
+  // Major not selected: show ALL templates, optionally filtered by mid.
   // Group by major/mid for scanability.
   if (!major) {
     const groups = new Map(); // major -> mid -> [tpl]
     for (const tpl of TEMPLATES) {
       const c = classifyTemplate(tpl);
+      if (mid && c.mid !== mid) continue;
       if (!groups.has(c.major)) groups.set(c.major, new Map());
       const mids = groups.get(c.major);
       if (!mids.has(c.mid)) mids.set(c.mid, []);
