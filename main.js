@@ -1146,6 +1146,7 @@ const importedFromQuery = applyQueryParamsToFormIfAny();
 if (!importedFromQuery) {
   restoreFormState();
 }
+wireSidebarNav();
 if (!dateInput.value) {
   setDefaultDate();
 }
@@ -1618,6 +1619,34 @@ function applyQueryParamsToFormIfAny() {
 
   persistFormState();
   return true;
+}
+
+function wireSidebarNav() {
+  const sidebar = document.getElementById("sidebar");
+  const scrim = document.getElementById("scrim");
+  const navToggle = document.getElementById("navToggle");
+  const navClose = document.getElementById("navClose");
+
+  if (!sidebar || !scrim || !navToggle || !navClose) return;
+
+  const setOpen = (open) => {
+    document.body.classList.toggle("nav-open", open);
+    navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+    scrim.setAttribute("aria-hidden", open ? "false" : "true");
+  };
+
+  navToggle.addEventListener("click", () => setOpen(!document.body.classList.contains("nav-open")));
+  navClose.addEventListener("click", () => setOpen(false));
+  scrim.addEventListener("click", () => setOpen(false));
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setOpen(false);
+  });
+
+  sidebar.addEventListener("click", (e) => {
+    const a = e.target && e.target.closest ? e.target.closest("a") : null;
+    if (a) setOpen(false);
+  });
 }
 
 function stripCoopFromSubject(subject) {

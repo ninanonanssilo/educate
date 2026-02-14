@@ -18,16 +18,50 @@
   <link href="/style.css?v=20260214-20" rel="stylesheet" />
 </head>
 <body>
+  <aside id="sidebar" class="sidebar" aria-label="카테고리">
+    <div class="side-head">
+      <div class="side-brand" aria-label="서비스">
+        <div class="side-mark" aria-hidden="true"></div>
+        <div class="side-brand-text">
+          <div class="side-app">Edu Tools</div>
+          <div class="side-sub">업무 자동화 도우미</div>
+        </div>
+      </div>
+      <button id="navClose" class="icon-btn" type="button" aria-label="닫기">
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+    <nav class="side-nav" aria-label="카테고리 목록">
+      <div class="side-section">생성기</div>
+      <a class="side-link is-active" href="/" aria-current="page">
+        <span class="side-ico" aria-hidden="true">D</span>
+        <span class="side-label">학교 공문 자동 작성</span>
+      </a>
+      <a class="side-link" href="https://money-report.pages.dev/" target="_blank" rel="noreferrer">
+        <span class="side-ico" aria-hidden="true">P</span>
+        <span class="side-label">품의 기안 생성기</span>
+        <span class="side-ext" aria-hidden="true">↗</span>
+      </a>
+      <div class="side-divider" role="separator" aria-hidden="true"></div>
+      <div class="side-section">연동</div>
+      <div class="side-note">추후 이 메뉴에서 서비스 간 연동을 추가합니다.</div>
+    </nav>
+    <div class="side-foot">
+      <div class="side-foot-spacer" aria-hidden="true"></div>
+    </div>
+  </aside>
+  <div id="scrim" class="scrim" aria-hidden="true"></div>
+
+  <button id="navToggle" class="nav-toggle" type="button" aria-label="카테고리 열기" aria-expanded="false">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </button>
+
   <header class="hero">
     <div class="hero-top">
       <h1>학교 공문 자동 작성 도우미</h1>
       <p class="hero-desc">AI와 함께하는 학교 업무 효율화</p>
-      <nav class="tool-cats" aria-label="카테고리">
-        <a class="tool-pill is-active" href="/" aria-current="page">학교 공문 자동 작성</a>
-        <a class="tool-pill" href="https://money-report.pages.dev/" target="_blank" rel="noreferrer">
-          품의 기안 생성기 <span aria-hidden="true">↗</span>
-        </a>
-      </nav>
     </div>
   </header>
 
