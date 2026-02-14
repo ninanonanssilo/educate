@@ -186,9 +186,10 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "",
     "붙임 표기 규칙:",
     "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
-    "- 붙임이 1개면 번호 없이 '붙임  <항목>' 1줄만 표기.",
-    "- 붙임이 여러 개면 '붙임' 아래에 1., 2., 3. ...으로 줄바꿈하여 모두 표기.",
+    "- 붙임이 1개면 번호 없이 1줄로 표기하고 같은 줄 끝에 '끝.'을 표기: '붙임  <항목>.  끝.'",
+    "- 붙임이 여러 개면 첫 줄은 '붙임 1. <항목>.'로, 다음 줄부터는 들여쓰기 후 번호를 표기하며 마지막 항목 줄 끝에 '끝.'을 표기.",
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
+    "- 붙임 항목 각 줄은 마침표(.)로 끝나게 할 것.",
     `- ${attachmentSentenceRule}`,
     `- ${detailsRule}`,
     `- ${toneRule}`,
@@ -196,10 +197,11 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "- 경유가 '미기재'면 '(경유)' 줄은 '(경유)'만 출력하고 뒤에 내용을 채우지 말 것.",
     "",
     "붙임(표기 예시)",
-    "붙임  운영 계획(안) 1부",
-    "붙임  1. 운영 계획(안) 1부",
-    "      2. 학년별 운영 시간표 1부",
-    "끝.",
+    "- 붙임 없음: (붙임 줄 생략) ... 마지막에 '끝.' 1줄 표기",
+    "- 붙임 1개: 붙임  운영 계획(안) 1부.  끝.",
+    "- 붙임 여러 개:",
+    "  붙임 1. 운영 계획(안) 1부.",
+    "        2. 학년별 운영 시간표 1부.  끝.",
     "",
     "발신  ...",
     "시행일  ...",
@@ -209,93 +211,140 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
   ].join("\n");
 }
 
-function stripAttachmentBlock(documentText) {
-  const lines = String(documentText || "").split("\n");
-  const out = [];
-  let inAttachment = false;
+function normalizeAttachmentSection(documentText, attachments) {
+  const list = Array.isArray(attachments) ? attachments : [];
+  const count = list.length;
+  const rawLines = String(documentText || "").split("\n");
 
-  for (const line of lines) {
-    const trimmed = line.trim();
+  const footerIndex = findFooterStartIndex(rawLines);
+  const contentRegion = footerIndex >= 0 ? rawLines.slice(0, footerIndex) : rawLines.slice();
+  const footerRegion = footerIndex >= 0 ? rawLines.slice(footerIndex) : [];
 
-    if (!inAttachment && trimmed.startsWith("붙임")) {
-      inAttachment = true;
-      continue;
+  // Remove any existing attachment block in the content region.
+  const attachmentStart = contentRegion.findIndex((l) => String(l || "").trim().startsWith("붙임"));
+  let contentLines = attachmentStart >= 0 ? contentRegion.slice(0, attachmentStart) : contentRegion.slice();
+
+  // Drop stray standalone end marks; we'll re-apply correctly.
+  contentLines = contentLines.filter((l) => String(l || "").trim() !== "끝.");
+
+  if (count === 0) {
+    // No attachments: no "붙임" lines, but ensure a standalone end mark exists.
+    const lastIdx = findLastNonEmptyIndex(contentLines);
+    if (lastIdx < 0) {
+      contentLines.push("끝.");
+      return joinWithFooter(contentLines, footerRegion);
     }
 
-    if (inAttachment) {
-      if (trimmed === "끝." || trimmed.startsWith("끝.")) {
-        out.push(line);
-        inAttachment = false;
-      }
-      continue;
+    // Prefer "… .  끝." on the last content line.
+    let last = String(contentLines[lastIdx] || "").replace(/\s*끝\.\s*$/g, "").trimEnd();
+    if (last && !last.endsWith(".")) {
+      last += ".";
     }
+    contentLines = contentLines.slice(0, lastIdx + 1);
+    contentLines[lastIdx] = `${last}  끝.`;
+    return joinWithFooter(contentLines, footerRegion);
+  }
 
-    out.push(line);
+  const attachmentLines = buildAttachmentLines(list);
+  if (attachmentLines.length) {
+    if (contentLines.length && contentLines[contentLines.length - 1].trim() !== "") {
+      contentLines.push("");
+    }
+    contentLines.push(...attachmentLines);
+  }
+
+  return joinWithFooter(contentLines, footerRegion);
+}
+
+function joinWithFooter(contentLines, footerLines) {
+  const out = contentLines.slice();
+  const footer = Array.isArray(footerLines) ? footerLines : [];
+
+  if (footer.length) {
+    if (out.length && out[out.length - 1].trim() !== "" && String(footer[0] || "").trim() !== "") {
+      out.push("");
+    }
+    out.push(...footer);
   }
 
   return out.join("\n");
 }
 
-function normalizeAttachmentSection(documentText, attachments) {
-  const list = Array.isArray(attachments) ? attachments : [];
-  const count = list.length;
-  let text = String(documentText || "");
+function findFooterStartIndex(lines) {
+  const list = Array.isArray(lines) ? lines : [];
+  const markers = ["발신", "시행일", "문서번호", "담당", "연락처"];
 
-  if (count === 0) {
-    return stripAttachmentBlock(text);
+  for (let i = 0; i < list.length; i += 1) {
+    const trimmed = String(list[i] || "").trim();
+    if (!trimmed) continue;
+    for (const m of markers) {
+      if (trimmed.startsWith(m)) {
+        return i;
+      }
+    }
   }
 
-  if (count === 1) {
-    // If AI outputs "붙임  1. ..." or multiple attachment lines, normalize to a single line:
-    // "붙임  <항목>"
-    const item = String(list[0] || "").trim();
-    if (!item) {
-      return stripAttachmentBlock(text);
-    }
+  return -1;
+}
 
-    const lines = text.split("\n");
-    const out = [];
-    let inAttachment = false;
-    let wrote = false;
+function buildAttachmentLines(attachments) {
+  const raw = Array.isArray(attachments) ? attachments : [];
+  const cleaned = raw
+    .map((item) => sanitizeAttachmentItem(item))
+    .filter(Boolean);
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-
-      if (!inAttachment && trimmed.startsWith("붙임")) {
-        inAttachment = true;
-        if (!wrote) {
-          out.push(`붙임  ${item}`);
-          wrote = true;
-        }
-        continue;
-      }
-
-      if (inAttachment) {
-        if (trimmed === "끝." || trimmed.startsWith("끝.")) {
-          out.push(line);
-          inAttachment = false;
-        }
-        continue;
-      }
-
-      out.push(line);
-    }
-
-    // If AI didn't include any attachment section but attachments exist, append before "끝." if present.
-    if (!wrote) {
-      const idx = out.findIndex((l) => String(l).trim() === "끝." || String(l).trim().startsWith("끝."));
-      if (idx >= 0) {
-        out.splice(idx, 0, `붙임  ${item}`);
-      } else {
-        out.push(`붙임  ${item}`);
-      }
-    }
-
-    return out.join("\n");
+  if (!cleaned.length) {
+    return [];
   }
 
-  // count >= 2: keep as-is; prompt steers numbering and we don't want to over-correct.
-  return text;
+  if (cleaned.length === 1) {
+    return [`붙임  ${ensurePeriod(cleaned[0])}  끝.`];
+  }
+
+  const indent = "        ";
+  const out = [];
+  out.push(`붙임 1. ${ensurePeriod(cleaned[0])}`);
+
+  for (let i = 1; i < cleaned.length; i += 1) {
+    let line = `${indent}${i + 1}. ${ensurePeriod(cleaned[i])}`;
+    if (i === cleaned.length - 1) {
+      line += "  끝.";
+    }
+    out.push(line);
+  }
+
+  return out;
+}
+
+function findLastNonEmptyIndex(lines) {
+  const list = Array.isArray(lines) ? lines : [];
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    if (String(list[i] || "").trim() !== "") {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function sanitizeAttachmentItem(value) {
+  let text = String(value || "").trim();
+  if (!text) return "";
+
+  // Remove common prefixes and numbering if user already typed them.
+  text = text.replace(/^붙임\s*/g, "");
+  text = text.replace(/^\d+\.\s*/g, "");
+
+  // Remove trailing end mark and trailing periods; we'll re-add.
+  text = text.replace(/\s*끝\.\s*$/g, "");
+  text = text.replace(/\.+\s*$/g, "");
+
+  return text.trim();
+}
+
+function ensurePeriod(text) {
+  const value = String(text || "").trim();
+  if (!value) return "";
+  return value.endsWith(".") ? value : `${value}.`;
 }
 
 function extractText(responseJson) {
