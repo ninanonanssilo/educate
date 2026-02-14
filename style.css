@@ -105,6 +105,41 @@ body {
   opacity: 0.93;
 }
 
+.tool-cats {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tool-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(246, 251, 255, 0.98);
+  backdrop-filter: blur(6px);
+  transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+
+.tool-pill:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.tool-pill.is-active {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.92);
+  color: #0b2f55;
+}
+
 .page {
   margin-top: 18px;
   display: grid;

@@ -1142,7 +1142,10 @@ const TEMPLATES = [
 ];
 
 initTemplates("");
-restoreFormState();
+const importedFromQuery = applyQueryParamsToFormIfAny();
+if (!importedFromQuery) {
+  restoreFormState();
+}
 if (!dateInput.value) {
   setDefaultDate();
 }
@@ -1559,6 +1562,62 @@ function normalizeQuickTemplateLabel(label) {
     .replace(/운영(?!\s*계획)/g, "운영 계획")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+function applyQueryParamsToFormIfAny() {
+  // Cross-service integration hook.
+  // Example:
+  // https://educate1.pages.dev/?subject=...&details=...&attachments=...
+  const params = new URLSearchParams(window.location.search);
+
+  const keys = [
+    "subject",
+    "details",
+    "attachments",
+    "recipient",
+    "via",
+    "sender",
+    "date",
+    "tone",
+    "docno",
+    "owner",
+    "contact",
+    "related",
+    "template",
+    "templateSearch",
+    "result",
+  ];
+
+  const hasAny = keys.some((k) => params.has(k));
+  if (!hasAny) return false;
+
+  if (params.has("subject")) subjectInput.value = params.get("subject") || "";
+  if (params.has("details")) detailsInput.value = params.get("details") || "";
+  if (params.has("attachments")) attachmentsInput.value = params.get("attachments") || "";
+  if (params.has("recipient")) recipientInput.value = params.get("recipient") || "";
+  if (params.has("via")) viaInput.value = params.get("via") || "";
+  if (params.has("sender")) senderInput.value = params.get("sender") || "";
+  if (params.has("date")) dateInput.value = params.get("date") || "";
+  if (params.has("tone")) toneSelect.value = params.get("tone") || DEFAULTS.tone;
+  if (params.has("docno")) docnoInput.value = params.get("docno") || "";
+  if (params.has("owner")) ownerInput.value = params.get("owner") || "";
+  if (params.has("contact")) contactInput.value = params.get("contact") || "";
+  if (params.has("related")) relatedInput.value = params.get("related") || "";
+  if (params.has("result")) result.value = params.get("result") || "";
+
+  if (templateSearchInput && params.has("templateSearch")) {
+    templateSearchInput.value = params.get("templateSearch") || "";
+    initTemplates(templateSearchInput.value);
+    updateTemplateSearchHint(templateSearchInput.value);
+  }
+
+  if (params.has("template")) {
+    const templateId = params.get("template") || "";
+    if (templateId) templateSelect.value = templateId;
+  }
+
+  persistFormState();
+  return true;
 }
 
 function stripCoopFromSubject(subject) {
