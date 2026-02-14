@@ -327,7 +327,7 @@ body.nav-open .scrim {
   display: grid;
   /* Keep the left form readable, give the result panel the remaining width. */
   /* Widen the writer panel so the template controls don't protrude. */
-  grid-template-columns: minmax(420px, 560px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--panel-gap);
   /* iOS safe-area + 100vh 잘림 대응 */
   padding-top: env(safe-area-inset-top);
@@ -819,7 +819,7 @@ button.ghost {
   }
 }
 
-@media (max-width: 920px) {
+@media (max-width: 980px) {
   .page {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -828,7 +828,7 @@ button.ghost {
     grid-template-columns: 1fr;
   }
 
-  /* In-app browsers and landscape phones often exceed 640px; keep a no-clipping layout up to 920px. */
+  /* In-app browsers and landscape phones often exceed 640px; keep a no-clipping layout up to 980px. */
   .template-row {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto auto;
@@ -874,7 +874,7 @@ button.ghost {
   }
 }
 
-@media (min-width: 921px) {
+@media (min-width: 981px) {
   /* Keep the result visible while adjusting inputs on desktop. */
   .preview {
     position: sticky;
