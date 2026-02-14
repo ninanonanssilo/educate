@@ -115,13 +115,20 @@ h3 {
 
 .template-row {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: 1.55fr 0.85fr;
   gap: 10px;
   align-items: end;
   padding: 12px;
   border: 1px dashed rgba(25, 145, 106, 0.35);
   border-radius: 14px;
   background: rgba(25, 145, 106, 0.05);
+}
+
+.template-pickers {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 10px;
+  align-items: end;
 }
 
 .template-label {
@@ -273,12 +280,39 @@ button.primary:hover {
   background: var(--brand-dark);
 }
 
+.preview-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.preview-top h2 {
+  margin: 0;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .result {
   width: 100%;
   min-height: 560px;
   white-space: pre;
   color: var(--ink);
   font-weight: 400;
+  line-height: 1.6;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    "D2Coding",
+    monospace;
 }
 
 .status {
@@ -418,6 +452,15 @@ button.primary:hover {
   }
 }
 
+@media (min-width: 921px) {
+  /* Keep the result visible while adjusting inputs on desktop. */
+  .preview {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+  }
+}
+
 @media (max-width: 640px) {
   .hero {
     margin-top: 14px;
@@ -429,9 +472,16 @@ button.primary:hover {
   .template-row {
     grid-template-columns: 1fr;
   }
+  .template-pickers {
+    grid-template-columns: 1fr;
+  }
   .template-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+  .preview-top {
+    align-items: flex-start;
+    flex-direction: column;
   }
   .advanced-grid {
     grid-template-columns: 1fr;

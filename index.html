@@ -28,19 +28,25 @@
   <main class="page">
     <section class="card writer">
       <h2>공문 자동 작성</h2>
-      <p class="description">주제와 핵심 내용을 입력하면 내부결재용 공문 초안이 바로 생성됩니다.</p>
+      <p class="description">주제와 핵심 내용을 입력하면 결재용 공문 초안이 바로 생성됩니다.</p>
       <p class="helper" role="note">
         개인정보(학생/학부모/교직원 실명, 연락처, 주민등록번호 등)는 입력하지 마세요. 민감 정보는 "홍길동(가명)"처럼 비식별 처리 후 작성하세요.
       </p>
 
       <form id="doc-form" class="form">
         <div class="template-row" aria-label="빠른 템플릿">
-          <label class="template-label">
-            빠른 템플릿
-            <select id="template" name="template">
-              <option value="">선택 안 함</option>
-            </select>
-          </label>
+          <div class="template-pickers">
+            <label class="template-label">
+              템플릿 검색
+              <input id="template-search" type="search" placeholder="예: 생활기록부, 연수, 졸업식" autocomplete="off" />
+            </label>
+            <label class="template-label">
+              빠른 템플릿
+              <select id="template" name="template">
+                <option value="">선택 안 함</option>
+              </select>
+            </label>
+          </div>
           <div class="template-actions">
             <button type="button" id="apply-template-btn">템플릿 적용</button>
             <button type="button" id="reset-btn" aria-label="입력 초기화">
@@ -118,14 +124,18 @@
         </label>
         <div class="actions">
           <button type="submit" class="primary">공문 생성</button>
-          <button type="button" id="copy-btn">결과 복사</button>
-          <button type="button" id="download-btn">TXT 다운로드</button>
         </div>
       </form>
     </section>
 
     <section class="card preview">
-      <h2>생성 결과</h2>
+      <div class="preview-top">
+        <h2>생성 결과</h2>
+        <div class="preview-actions" aria-label="결과 도구">
+          <button type="button" id="copy-btn">결과 복사</button>
+          <button type="button" id="download-btn">TXT 다운로드</button>
+        </div>
+      </div>
       <textarea id="result" class="result" spellcheck="false" placeholder="생성된 공문은 여기서 바로 수정할 수 있습니다. 필요에 맞게 손보고 복사/다운로드하세요."></textarea>
       <p id="status" class="status" aria-live="polite"></p>
     </section>

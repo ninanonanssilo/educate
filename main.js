@@ -13,6 +13,7 @@ const ownerInput = document.getElementById("owner");
 const contactInput = document.getElementById("contact");
 const relatedInput = document.getElementById("related");
 const templateSelect = document.getElementById("template");
+const templateSearchInput = document.getElementById("template-search");
 const applyTemplateBtn = document.getElementById("apply-template-btn");
 const resetBtn = document.getElementById("reset-btn");
 const result = document.getElementById("result");
@@ -1139,7 +1140,7 @@ const TEMPLATES = [
   },
 ];
 
-initTemplates();
+initTemplates("");
 restoreFormState();
 if (!dateInput.value) {
   setDefaultDate();
@@ -1147,6 +1148,7 @@ if (!dateInput.value) {
 setStatus("주제를 입력한 뒤 공문 생성을 누르면 AI가 전체 공문을 작성합니다.");
 wireAutoSave();
 disableResultDragDrop();
+wireTemplateSearch();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1359,8 +1361,11 @@ function initTemplates() {
     templateSelect.remove(1);
   }
 
+  const query = String(arguments[0] || "").trim().toLowerCase();
+  const filtered = query ? TEMPLATES.filter((t) => templateMatchesQuery(t, query)) : TEMPLATES.slice();
+
   const groups = new Map();
-  for (const tpl of TEMPLATES) {
+  for (const tpl of filtered) {
     const category = String(tpl.category || "기타");
     if (!groups.has(category)) {
       groups.set(category, []);
@@ -1383,6 +1388,37 @@ function initTemplates() {
 
     templateSelect.appendChild(optgroup);
   }
+}
+
+function templateMatchesQuery(tpl, query) {
+  const cat = String(tpl.category || "").toLowerCase();
+  const label = String(tpl.label || "").toLowerCase();
+  const subject = String(tpl.subject || "").toLowerCase();
+  return cat.includes(query) || label.includes(query) || subject.includes(query);
+}
+
+function wireTemplateSearch() {
+  if (!templateSearchInput) return;
+
+  const applyFilter = () => {
+    const current = String(templateSelect.value || "");
+    initTemplates(templateSearchInput.value || "");
+
+    if (current) {
+      // Restore selection if still present after filtering.
+      const exists = Array.from(templateSelect.options).some((o) => o.value === current);
+      templateSelect.value = exists ? current : "";
+    }
+    persistFormState();
+  };
+
+  let timer = null;
+  templateSearchInput.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(applyFilter, 120);
+  });
+
+  templateSearchInput.addEventListener("search", applyFilter);
 }
 
 function buildFilename(payload) {
@@ -1439,6 +1475,7 @@ function persistFormState() {
     owner: ownerInput.value,
     contact: contactInput.value,
     related: relatedInput.value,
+    templateSearch: templateSearchInput ? templateSearchInput.value : "",
     templateId: templateSelect.value,
     result: result.value,
   };
@@ -1470,6 +1507,10 @@ function restoreFormState() {
     if (typeof state.owner === "string") ownerInput.value = state.owner;
     if (typeof state.contact === "string") contactInput.value = state.contact;
     if (typeof state.related === "string") relatedInput.value = state.related;
+    if (templateSearchInput && typeof state.templateSearch === "string") {
+      templateSearchInput.value = state.templateSearch;
+      initTemplates(state.templateSearch);
+    }
     const templateId =
       typeof state.templateId === "string"
         ? state.templateId
