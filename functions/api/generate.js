@@ -275,8 +275,11 @@ function normalizeAttachmentSection(documentText, attachments) {
 
   const attachmentLines = buildAttachmentLines(list);
   if (attachmentLines.length) {
-    // 붙임이 있는 경우: 본문 종료 후 2줄 내려 붙임 표기(작성 예시 기준).
-    if (contentLines.length && contentLines[contentLines.length - 1].trim() !== "") contentLines.push("");
+    // 붙임이 있는 경우: 본문 종료 후 1줄 띄우고 붙임 표기(예시 기준).
+    // (너무 크게 벌어지는 것을 방지하기 위해 빈 줄은 1줄로 제한)
+    while (contentLines.length && String(contentLines[contentLines.length - 1] || "").trim() === "") {
+      contentLines.pop();
+    }
     contentLines.push("");
     contentLines.push(...attachmentLines);
   }
