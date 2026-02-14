@@ -33,7 +33,6 @@
 html,
 body {
   width: 100%;
-  overflow-x: hidden; /* prevent accidental horizontal scroll on mobile */
 }
 
 body {
@@ -43,11 +42,15 @@ body {
   -webkit-text-size-adjust: 100%;
   word-break: keep-all; /* 기본 텍스트는 어절 단위로 줄바꿈 */
   overflow-wrap: break-word; /* 긴 문자열(URL 등)은 예외적으로 줄바꿈 */
+  /* iOS/인앱브라우저 safe-area + 미세 오버플로 방지 */
+  padding-left: max(10px, env(safe-area-inset-left));
+  padding-right: max(10px, env(safe-area-inset-right));
   background:
     radial-gradient(circle at 85% 8%, rgba(31, 111, 184, 0.16) 0%, rgba(31, 111, 184, 0) 38%),
     radial-gradient(circle at 6% 26%, rgba(25, 145, 106, 0.14) 0%, rgba(25, 145, 106, 0) 36%),
     linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 100%);
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 .hero,
@@ -55,7 +58,8 @@ body {
 .official-links,
 .footer {
   /* Wider canvas so both "작성" and "생성 결과" panels can breathe on desktop. */
-  width: min(1320px, 96%);
+  width: 100%;
+  max-width: 1320px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -585,12 +589,6 @@ button.ghost {
 }
 
 @media (max-width: 640px) {
-  .hero,
-  .page,
-  .official-links,
-  .footer {
-    width: calc(100% - 16px);
-  }
   .hero {
     margin-top: 10px;
     padding: 16px;
