@@ -1146,6 +1146,7 @@ if (!dateInput.value) {
 }
 setStatus("주제를 입력한 뒤 공문 생성을 누르면 AI가 전체 공문을 작성합니다.");
 wireAutoSave();
+disableResultDragDrop();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1338,6 +1339,13 @@ function formatDate(rawDate) {
 
 function setStatus(message) {
   statusText.textContent = message;
+}
+
+function disableResultDragDrop() {
+  // Prevent accidental drag/drop inside the textarea which can move text.
+  result.addEventListener("dragstart", (e) => e.preventDefault());
+  result.addEventListener("dragover", (e) => e.preventDefault());
+  result.addEventListener("drop", (e) => e.preventDefault());
 }
 
 function initTemplates() {

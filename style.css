@@ -78,7 +78,8 @@ body {
 .page {
   margin-top: 18px;
   display: grid;
-  grid-template-columns: 1.06fr 0.94fr;
+  /* Make the result panel wider on desktop */
+  grid-template-columns: 0.92fr 1.08fr;
   gap: 16px;
 }
 
@@ -262,7 +263,7 @@ button.primary:hover {
 
 .result {
   width: 100%;
-  min-height: 430px;
+  min-height: 560px;
   white-space: pre;
   color: var(--ink);
   font-weight: 400;
@@ -427,6 +428,6 @@ button.primary:hover {
     flex-direction: column;
   }
   .result {
-    min-height: 320px;
+    min-height: 420px;
   }
 }
