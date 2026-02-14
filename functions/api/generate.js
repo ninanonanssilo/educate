@@ -62,9 +62,14 @@ export async function onRequestPost(context) {
       return json({ error: data.error?.message || "AI request failed." }, 500);
     }
 
-    const document = extractText(data).trim();
+    let document = extractText(data).trim();
     if (!document) {
       return json({ error: "Empty AI response." }, 500);
+    }
+
+    // 규정/관행상 '붙임'이 없으면 붙임 구역을 아예 표기하지 않는 형태로 정리한다.
+    if (attachments.length === 0) {
+      document = stripAttachmentBlock(document).trim();
     }
 
     return json({ document }, 200);
@@ -92,9 +97,9 @@ function sanitizeModel(raw) {
 }
 
 function buildPrompt({ subject, recipient, sender, date, details, attachments }) {
-  const attachmentHint = attachments.length
+  const attachmentInput = attachments.length
     ? attachments.map((item, index) => `${index + 1}. ${item}`).join("\n")
-    : "자동으로 상황에 맞는 붙임 항목 1~2개를 생성";
+    : "(없음)";
 
   return [
     "아래 정보를 바탕으로 한국 학교 내부결재용 공문을 작성해줘.",
@@ -105,7 +110,7 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments })
     `- 시행일: ${date || "오늘 날짜 형식 유지"}`,
     `- 발신: ${sender}`,
     `- 핵심 내용: ${details || "주제에 맞게 목적/추진내용/협조사항을 구체적으로 작성"}`,
-    `- 붙임: ${attachmentHint}`,
+    `- 붙임: ${attachmentInput}`,
     "",
     "[작성 규칙]",
     "1) 반드시 다음 형식만 출력:",
@@ -118,8 +123,15 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments })
     "  나. ...",
     "  다. ...",
     "",
-    "붙임 1. ...",
-    "붙임 2. ... (필요 시)",
+    "붙임 표기 규칙:",
+    "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
+    "- 붙임이 1개면 '붙임  1. <항목>' 1줄만 표기.",
+    "- 붙임이 여러 개면 '붙임' 아래에 1., 2., 3. ...으로 줄바꿈하여 모두 표기.",
+    "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
+    "",
+    "붙임(표기 예시)",
+    "붙임  1. 운영 계획(안) 1부",
+    "      2. 학년별 운영 시간표 1부",
     "끝.",
     "",
     "발신  ...",
@@ -128,6 +140,33 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments })
     "3) 문장 길이는 간결하게, 내용은 실제 결재 가능한 수준으로 작성.",
     "4) 마크다운/코드블록/설명문은 절대 출력하지 말 것.",
   ].join("\n");
+}
+
+function stripAttachmentBlock(documentText) {
+  const lines = String(documentText || "").split("\n");
+  const out = [];
+  let inAttachment = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!inAttachment && trimmed.startsWith("붙임")) {
+      inAttachment = true;
+      continue;
+    }
+
+    if (inAttachment) {
+      if (trimmed === "끝." || trimmed.startsWith("끝.")) {
+        out.push(line);
+        inAttachment = false;
+      }
+      continue;
+    }
+
+    out.push(line);
+  }
+
+  return out.join("\n");
 }
 
 function extractText(responseJson) {
