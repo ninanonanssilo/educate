@@ -33,6 +33,7 @@
 html,
 body {
   width: 100%;
+  max-width: 100%;
 }
 
 html {
@@ -69,12 +70,12 @@ body {
 .footer {
   /* Wider canvas so both "작성" and "생성 결과" panels can breathe on desktop. */
   width: 100%;
-  max-width: 1320px;
+  max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
   /* iOS/인앱브라우저 safe-area + 좁은 화면에서 잘림 방지 */
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
+  padding-left: max(clamp(14px, 4vw, 28px), env(safe-area-inset-left));
+  padding-right: max(clamp(14px, 4vw, 28px), env(safe-area-inset-right));
 }
 
 .hero {
@@ -127,7 +128,8 @@ body {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 18px;
+  /* Keep all cards visually aligned across sections/devices. */
+  padding: clamp(14px, 3.5vw, 20px);
   box-shadow: 0 10px 22px rgba(17, 43, 68, 0.08);
   animation: fadeUp 0.5s ease-out;
   min-width: 0; /* allow grid children to shrink without overflow */
@@ -295,6 +297,11 @@ h3 {
   gap: 12px;
 }
 
+/* Avoid overflow from flex/grid children with long content. */
+.form * {
+  min-width: 0;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -417,10 +424,22 @@ button.ghost {
 }
 
 .preview-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  justify-content: end;
+}
+
+.preview-actions button {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 360px) {
+  .preview-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .result {
