@@ -199,8 +199,12 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "",
     "붙임 표기 규칙:",
     "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
-    "- 붙임이 1개면 번호 없이 1줄로 표기하고 같은 줄 끝에 '끝.'을 표기: '붙임  <항목>.  끝.'",
-    "- 붙임이 여러 개면 첫 줄은 '붙임 1. <항목>.'로, 다음 줄부터는 들여쓰기 후 번호를 표기하며 마지막 항목 줄 끝에 '끝.'을 표기.",
+    "- 붙임이 1개면 한 줄에 표기하고 같은 줄 끝에 '끝.'을 표기: '붙임 <항목>. 끝.'",
+    "- 붙임이 여러 개면 다음 형식만 사용:",
+    "  붙임",
+    "    1. <항목>.",
+    "    2. <항목>.",
+    "  끝.",
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
     "- 붙임 항목 각 줄은 마침표(.)로 끝나게 할 것.",
     `- ${attachmentSentenceRule}`,
@@ -211,10 +215,12 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "",
     "붙임(표기 예시)",
     "- 붙임 없음: (붙임 줄 생략) ... 마지막에 '끝.' 1줄 표기",
-    "- 붙임 1개: 붙임  운영 계획(안) 1부.  끝.",
+    "- 붙임 1개: 붙임 운영 계획(안) 1부. 끝.",
     "- 붙임 여러 개:",
-    "  붙임 1. 운영 계획(안) 1부.",
-    "        2. 학년별 운영 시간표 1부.  끝.",
+    "  붙임",
+    "    1. 운영 계획(안) 1부.",
+    "    2. 학년별 운영 시간표 1부.",
+    "  끝.",
     "",
     "발신  ...",
     "시행일  ...",
@@ -248,13 +254,13 @@ function normalizeAttachmentSection(documentText, attachments) {
       return joinWithFooter(contentLines, footerRegion);
     }
 
-    // Prefer "… .  끝." on the last content line.
+    // Prefer "… . 끝." on the last content line.
     let last = String(contentLines[lastIdx] || "").replace(/\s*끝\.\s*$/g, "").trimEnd();
     if (last && !last.endsWith(".")) {
       last += ".";
     }
     contentLines = contentLines.slice(0, lastIdx + 1);
-    contentLines[lastIdx] = `${last}  끝.`;
+    contentLines[lastIdx] = `${last} 끝.`;
     return joinWithFooter(contentLines, footerRegion);
   }
 
@@ -494,24 +500,15 @@ function buildAttachmentLines(attachments) {
   }
 
   if (cleaned.length === 1) {
-    return [`붙임  ${ensurePeriod(cleaned[0])}  끝.`];
+    return [`붙임 ${ensurePeriod(cleaned[0])} 끝.`];
   }
 
-  // Keep the numbering column aligned like common 공문 formatting:
-  // "붙임 1." then next lines are indented so "2." starts under "1.".
-  // With Hangul often rendered as double-width, 5 spaces visually aligns under "붙임 1.".
-  const indent = "     ";
-  const out = [];
-  out.push(`붙임 1. ${ensurePeriod(cleaned[0])}`);
-
-  for (let i = 1; i < cleaned.length; i += 1) {
-    let line = `${indent}${i + 1}. ${ensurePeriod(cleaned[i])}`;
-    if (i === cleaned.length - 1) {
-      line += "  끝.";
-    }
-    out.push(line);
+  const indent = "  ";
+  const out = ["붙임"];
+  for (let i = 0; i < cleaned.length; i += 1) {
+    out.push(`${indent}${i + 1}. ${ensurePeriod(cleaned[i])}`);
   }
-
+  out.push("끝.");
   return out;
 }
 
