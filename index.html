@@ -36,11 +36,13 @@
       <form id="doc-form" class="form">
         <div class="template-row" aria-label="빠른 템플릿">
           <div class="template-pickers">
-            <label class="template-label">
-              템플릿 검색
-              <input id="template-search" type="search" placeholder="예: 생활기록부, 연수, 졸업식" autocomplete="off" />
+            <div class="template-search-wrap">
+              <label class="template-label" for="template-search">
+                템플릿 검색
+                <input id="template-search" type="search" placeholder="예: 생활기록부, 연수, 졸업식" autocomplete="off" />
+              </label>
               <div id="template-search-results" class="template-results" aria-live="polite"></div>
-            </label>
+            </div>
             <label class="template-label">
               빠른 템플릿
               <select id="template" name="template">
