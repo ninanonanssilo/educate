@@ -103,6 +103,48 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments, u
     ? attachments.map((item, index) => `${index + 1}. ${item}`).join("\n")
     : "(없음)";
 
+  const isDetailsEmpty = !String(details || "").trim();
+
+  // 사용자가 "본문 핵심내용"을 비워두고 체크박스를 켠 경우, 본문을 최소 문장으로만 구성한다.
+  if (useAttachmentPhrase && isDetailsEmpty) {
+    const minimalSentence = attachments.length
+      ? "붙임과 같이 시행하고자 합니다."
+      : "아래와 같이 시행하고자 합니다.";
+
+    return [
+      "아래 정보를 바탕으로 한국 학교 내부결재용 공문을 작성해줘.",
+      "",
+      `[입력 정보]`,
+      `- 수신: ${recipient}`,
+      `- 제목: ${subject}`,
+      `- 시행일: ${date || "오늘 날짜 형식 유지"}`,
+      `- 발신: ${sender}`,
+      `- 붙임: ${attachmentInput}`,
+      "",
+      "[작성 규칙]",
+      "1) 반드시 다음 형식만 출력:",
+      "수신  ...",
+      "(경유)",
+      "제목  ...",
+      "",
+      "1. ...",
+      "",
+      "붙임 1. ... (붙임이 있을 때만)",
+      "끝.",
+      "",
+      "발신  ...",
+      "시행일  ...",
+      "2) 본문은 아래 문장 1개로만 작성(임의로 목적/배경/요청사항 추가 금지).",
+      `- ${minimalSentence}`,
+      "3) 붙임 표기 규칙:",
+      "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
+      "- 붙임이 1개면 '붙임  1. <항목>' 1줄만 표기.",
+      "- 붙임이 여러 개면 '붙임' 아래에 1., 2., 3. ...으로 줄바꿈하여 모두 표기.",
+      "- 붙임 항목 문구는 입력값을 그대로 사용(임의 생성/수정 금지).",
+      "4) 마크다운/코드블록/설명문은 절대 출력하지 말 것.",
+    ].join("\n");
+  }
+
   const attachmentSentenceRule = useAttachmentPhrase
     ? "본문에는 '붙임과 같이 시행하고자 합니다.' 문장을 1회 포함하되, 붙임이 0개면 '아래와 같이 시행하고자 합니다.'로 대체할 것."
     : "본문에는 관행적인 붙임 문구를 임의로 추가하지 말 것.";
