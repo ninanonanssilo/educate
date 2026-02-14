@@ -20,7 +20,6 @@ const resetBtn = document.getElementById("reset-btn");
 const result = document.getElementById("result");
 const copyBtn = document.getElementById("copy-btn");
 const downloadBtn = document.getElementById("download-btn");
-const scrollToFormBtn = document.getElementById("scroll-to-form-btn");
 const statusText = document.getElementById("status");
 const submitButton = form.querySelector("button[type='submit']");
 
@@ -1152,7 +1151,6 @@ wireAutoSave();
 disableResultDragDrop();
 wireTemplateSearch();
 updateTemplateSearchHint(templateSearchInput ? templateSearchInput.value : "");
-wireScrollHelpers();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1218,14 +1216,6 @@ downloadBtn.addEventListener("click", () => {
 
   setStatus("TXT 파일을 다운로드했습니다.");
 });
-
-function wireScrollHelpers() {
-  if (!scrollToFormBtn) return;
-  scrollToFormBtn.addEventListener("click", () => {
-    form.scrollIntoView({ behavior: "smooth", block: "start" });
-    setTimeout(() => subjectInput?.focus?.(), 250);
-  });
-}
 
 applyTemplateBtn.addEventListener("click", () => {
   const id = String(templateSelect.value || "");
