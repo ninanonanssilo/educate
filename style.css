@@ -32,6 +32,7 @@ body {
   margin: 0;
   color: var(--ink);
   font-family: "Paperlogy", "Noto Sans KR", sans-serif;
+  -webkit-text-size-adjust: 100%;
   background:
     radial-gradient(circle at 85% 8%, rgba(31, 111, 184, 0.16) 0%, rgba(31, 111, 184, 0) 38%),
     radial-gradient(circle at 6% 26%, rgba(25, 145, 106, 0.14) 0%, rgba(25, 145, 106, 0) 36%),
@@ -397,6 +398,10 @@ button.primary:hover {
   background: var(--brand-dark);
 }
 
+button.ghost {
+  background: #f6fbff;
+}
+
 .preview-top {
   display: flex;
   align-items: center;
@@ -583,6 +588,15 @@ button.primary:hover {
     margin-top: 14px;
     padding: 16px;
   }
+  .card {
+    padding: 14px;
+  }
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
   .grid-2 {
     grid-template-columns: 1fr;
   }
@@ -594,7 +608,7 @@ button.primary:hover {
   }
   .template-results {
     position: static;
-    display: block;
+    display: none;
     margin-top: 8px;
     max-height: 260px;
   }
@@ -616,6 +630,7 @@ button.primary:hover {
     flex-direction: column;
   }
   .result {
-    min-height: 420px;
+    min-height: 55vh;
+    font-size: 14px;
   }
 }
