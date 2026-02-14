@@ -344,6 +344,9 @@ button.ghost {
   margin: 10px 0 0;
   color: var(--accent);
   font-weight: 700;
+  line-height: 1.45;
+  word-break: keep-all; /* wrap by words (어절) instead of mid-word breaks */
+  overflow-wrap: break-word; /* still break very long tokens if needed */
 }
 
 .official-links {
