@@ -14,6 +14,7 @@ const contactInput = document.getElementById("contact");
 const relatedInput = document.getElementById("related");
 const templateSelect = document.getElementById("template");
 const templateSearchInput = document.getElementById("template-search");
+const templateSearchResults = document.getElementById("template-search-results");
 const applyTemplateBtn = document.getElementById("apply-template-btn");
 const resetBtn = document.getElementById("reset-btn");
 const result = document.getElementById("result");
@@ -1149,6 +1150,7 @@ setStatus("주제를 입력한 뒤 공문 생성을 누르면 AI가 전체 공�
 wireAutoSave();
 disableResultDragDrop();
 wireTemplateSearch();
+renderTemplateSearchResults(templateSearchInput ? templateSearchInput.value : "");
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1361,8 +1363,8 @@ function initTemplates() {
     templateSelect.remove(1);
   }
 
-  const query = String(arguments[0] || "").trim().toLowerCase();
-  const filtered = query ? TEMPLATES.filter((t) => templateMatchesQuery(t, query)) : TEMPLATES.slice();
+  const query = normalizeQuery(arguments[0] || "");
+  const filtered = getFilteredTemplates(query);
 
   const groups = new Map();
   for (const tpl of filtered) {
@@ -1397,12 +1399,23 @@ function templateMatchesQuery(tpl, query) {
   return cat.includes(query) || label.includes(query) || subject.includes(query);
 }
 
+function normalizeQuery(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function getFilteredTemplates(query) {
+  if (!query) return TEMPLATES.slice();
+  return TEMPLATES.filter((t) => templateMatchesQuery(t, query));
+}
+
 function wireTemplateSearch() {
   if (!templateSearchInput) return;
 
   const applyFilter = () => {
     const current = String(templateSelect.value || "");
-    initTemplates(templateSearchInput.value || "");
+    const query = templateSearchInput.value || "";
+    initTemplates(query);
+    renderTemplateSearchResults(query);
 
     if (current) {
       // Restore selection if still present after filtering.
@@ -1419,6 +1432,67 @@ function wireTemplateSearch() {
   });
 
   templateSearchInput.addEventListener("search", applyFilter);
+}
+
+function renderTemplateSearchResults(rawQuery) {
+  if (!templateSearchResults) return;
+
+  const query = normalizeQuery(rawQuery);
+  if (!query) {
+    templateSearchResults.innerHTML = "";
+    return;
+  }
+
+  const filtered = getFilteredTemplates(query);
+  const count = filtered.length;
+
+  if (!count) {
+    templateSearchResults.innerHTML =
+      `<div class="template-result-empty">검색 결과 없음</div>`;
+    return;
+  }
+
+  const top = filtered.slice().sort((a, b) => String(a.label).localeCompare(String(b.label), "ko")).slice(0, 10);
+  const meta = `<div class="template-result-meta">검색 결과: ${count}개 (상위 ${top.length}개 표시)</div>`;
+
+  const items = top
+    .map((t) => {
+      const cat = escapeHtml(String(t.category || "기타"));
+      const label = escapeHtml(String(t.label || ""));
+      const subject = escapeHtml(String(t.subject || ""));
+      const id = escapeHtml(String(t.id || ""));
+      return (
+        `<button type="button" class="template-result-item" data-template-id="${id}">` +
+        `<span class="template-result-category">${cat}</span>` +
+        `<div class="template-result-title">${label}</div>` +
+        `<div class="template-result-subject">${subject}</div>` +
+        `</button>`
+      );
+    })
+    .join("");
+
+  templateSearchResults.innerHTML = `${meta}<div class="template-result-list">${items}</div>`;
+
+  templateSearchResults.querySelectorAll("button[data-template-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = String(btn.getAttribute("data-template-id") || "");
+      if (!id) return;
+
+      templateSelect.value = id;
+      persistFormState();
+      setStatus("템플릿을 선택했습니다. '템플릿 적용'을 누르거나, 바로 적용하려면 Enter로 검색 후 클릭하세요.");
+      templateSelect.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+}
+
+function escapeHtml(text) {
+  return String(text || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function buildFilename(payload) {
