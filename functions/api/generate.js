@@ -81,8 +81,11 @@ export async function onRequestPost(context) {
       return json({ error: "Empty AI response." }, 500);
     }
 
+    // Normalize basic header lines (수신/경유/제목) before inserting sections.
+    document = normalizeHeaderFormatting(document).trim();
     document = normalizeRelatedSection(document, related).trim();
     document = normalizeAttachmentSection(document, attachments).trim();
+    document = normalizeBodyIndentation(document).trim();
 
     return json({ document }, 200);
   } catch (error) {
@@ -190,6 +193,12 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "  나. ...",
     "  다. ...",
     "",
+    "본문 항목/들여쓰기 규칙:",
+    "- 최상위 항목은 '1.', '2.'처럼 숫자+마침표 형식만 사용.",
+    "- 하위 항목은 '  가.', '  나.'처럼 2칸 들여쓰기 후 한글 글머리표 사용.",
+    "- 더 하위가 필요하면 '    1)'처럼 추가 들여쓰기로 표기하되 남발하지 말 것.",
+    "- 본문은 간결하게(불필요한 수식 최소), 문장부호와 띄어쓰기는 자연스럽게.",
+    "",
     "관련 표기 규칙:",
     "- 관련이 0개면 '관련' 항목을 쓰지 말 것.",
     "- 관련이 있으면 본문 첫 항목을 반드시 '1. 관련'으로 시작할 것(가장 먼저).",
@@ -199,12 +208,10 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "",
     "붙임 표기 규칙:",
     "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",
-    "- 붙임이 1개면 한 줄에 표기하고 같은 줄 끝에 '끝.'을 표기: '붙임 <항목>. 끝.'",
-    "- 붙임이 여러 개면 다음 형식만 사용:",
-    "  붙임",
-    "    1. <항목>.",
-    "    2. <항목>.",
-    "  끝.",
+    "- 붙임이 1개면 한 줄에 표기하고 같은 줄 끝에 '  끝.'(끝 앞 공백 2칸)를 표기: '붙임 <항목>.  끝.'",
+    "- 붙임이 여러 개면 다음 형식만 사용(첫 줄에 '붙임 1.'을 쓰고, 다음 줄부터 번호를 들여써서 나열):",
+    "  붙임 1. <항목>.",
+    "     2. <항목>.  끝.",
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
     "- 붙임 항목 각 줄은 마침표(.)로 끝나게 할 것.",
     `- ${attachmentSentenceRule}`,
@@ -214,13 +221,11 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "- 경유가 '미기재'면 '(경유)' 줄은 '(경유)'만 출력하고 뒤에 내용을 채우지 말 것.",
     "",
     "붙임(표기 예시)",
-    "- 붙임 없음: (붙임 줄 생략) ... 마지막에 '끝.' 1줄 표기",
-    "- 붙임 1개: 붙임 운영 계획(안) 1부. 끝.",
+    "- 붙임 없음: (붙임 줄 생략) 본문 마지막 문장 끝에 '  끝.' 표기",
+    "- 붙임 1개: 붙임 운영 계획(안) 1부.  끝.",
     "- 붙임 여러 개:",
-    "  붙임",
-    "    1. 운영 계획(안) 1부.",
-    "    2. 학년별 운영 시간표 1부.",
-    "  끝.",
+    "  붙임 1. 운영 계획(안) 1부.",
+    "     2. 학년별 운영 시간표 1부.  끝.",
     "",
     "발신  ...",
     "시행일  ...",
@@ -231,6 +236,7 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
 }
 
 function normalizeAttachmentSection(documentText, attachments) {
+  const END_MARK = "  끝.";
   const list = Array.isArray(attachments) ? attachments : [];
   const count = list.length;
   const rawLines = String(documentText || "").split("\n");
@@ -254,21 +260,24 @@ function normalizeAttachmentSection(documentText, attachments) {
       return joinWithFooter(contentLines, footerRegion);
     }
 
-    // Prefer "… . 끝." on the last content line.
-    let last = String(contentLines[lastIdx] || "").replace(/\s*끝\.\s*$/g, "").trimEnd();
+    // Prefer "… .  끝." on the last content line.
+    let last = String(contentLines[lastIdx] || "")
+      .replace(/\s*끝\.\s*$/g, "")
+      .replace(/\s+$/g, "")
+      .trimEnd();
     if (last && !last.endsWith(".")) {
       last += ".";
     }
     contentLines = contentLines.slice(0, lastIdx + 1);
-    contentLines[lastIdx] = `${last} 끝.`;
+    contentLines[lastIdx] = `${last}${END_MARK}`;
     return joinWithFooter(contentLines, footerRegion);
   }
 
   const attachmentLines = buildAttachmentLines(list);
   if (attachmentLines.length) {
-    if (contentLines.length && contentLines[contentLines.length - 1].trim() !== "") {
-      contentLines.push("");
-    }
+    // 붙임이 있는 경우: 본문 종료 후 2줄 내려 붙임 표기(작성 예시 기준).
+    if (contentLines.length && contentLines[contentLines.length - 1].trim() !== "") contentLines.push("");
+    contentLines.push("");
     contentLines.push(...attachmentLines);
   }
 
@@ -490,6 +499,7 @@ function findFooterStartIndex(lines) {
 }
 
 function buildAttachmentLines(attachments) {
+  const END_MARK = "  끝.";
   const raw = Array.isArray(attachments) ? attachments : [];
   const cleaned = raw
     .map((item) => sanitizeAttachmentItem(item))
@@ -500,16 +510,133 @@ function buildAttachmentLines(attachments) {
   }
 
   if (cleaned.length === 1) {
-    return [`붙임 ${ensurePeriod(cleaned[0])} 끝.`];
+    return [`붙임 ${ensurePeriod(cleaned[0])}${END_MARK}`];
   }
 
-  const indent = "  ";
-  const out = ["붙임"];
-  for (let i = 0; i < cleaned.length; i += 1) {
-    out.push(`${indent}${i + 1}. ${ensurePeriod(cleaned[i])}`);
+  // Align numbering column under "1." of "붙임 1." (plain-text approximation).
+  // User expectation: "붙임 1" next line starts like "     2" (5 spaces).
+  const indent = "     "; // 5 spaces
+  const out = [];
+  out.push(`붙임 1. ${ensurePeriod(cleaned[0])}`);
+
+  for (let i = 1; i < cleaned.length; i += 1) {
+    let line = `${indent}${i + 1}. ${ensurePeriod(cleaned[i])}`;
+    if (i === cleaned.length - 1) {
+      line += END_MARK;
+    }
+    out.push(line);
   }
-  out.push("끝.");
+
   return out;
+}
+
+function normalizeHeaderFormatting(documentText) {
+  const lines = String(documentText || "").split("\n");
+  if (!lines.length) return String(documentText || "");
+
+  const out = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    let raw = String(lines[i] || "");
+    const trimmed = raw.trim();
+
+    // Normalize common colon variants into the required "라벨  값" style.
+    raw = raw.replace(/^\s*수신\s*[:：]\s*/g, "수신  ");
+    raw = raw.replace(/^\s*\(경유\)\s*[:：]\s*/g, "(경유) ");
+    raw = raw.replace(/^\s*제\s*목\s*[:：]\s*/g, "제목  ");
+
+    // Ensure label spacing when the model outputs "수신 ..." without the two-space gap.
+    raw = raw.replace(/^\s*수신\s+(?!\s)/g, "수신  ");
+    raw = raw.replace(/^\s*제\s*목\s+(?!\s)/g, "제목  ");
+
+    // Keep empty lines as-is.
+    if (!trimmed) {
+      out.push(raw);
+      continue;
+    }
+
+    out.push(raw);
+  }
+
+  return out.join("\n");
+}
+
+function normalizeBodyIndentation(documentText) {
+  const lines = String(documentText || "").split("\n");
+  if (!lines.length) return String(documentText || "");
+
+  const footerStart = findFooterStartIndex(lines);
+  const headerAndBody = footerStart >= 0 ? lines.slice(0, footerStart) : lines.slice();
+  const footer = footerStart >= 0 ? lines.slice(footerStart) : [];
+
+  const out = [];
+  let prevPrefixLen = 0;
+  let prevWasMarker = false;
+
+  for (let i = 0; i < headerAndBody.length; i += 1) {
+    let raw = String(headerAndBody[i] || "");
+    const trimmed = raw.trim();
+
+    // Preserve blank lines and reset continuation context.
+    if (!trimmed) {
+      out.push(raw);
+      prevPrefixLen = 0;
+      prevWasMarker = false;
+      continue;
+    }
+
+    // Normalize indentation for common markers.
+    // Top-level: "1. ..."
+    const top = trimmed.match(/^(\d+)\.\s+/);
+    if (top) {
+      raw = `${top[1]}. ${trimmed.replace(/^(\d+)\.\s+/, "")}`;
+      out.push(raw);
+      prevPrefixLen = `${top[1]}. `.length;
+      prevWasMarker = true;
+      continue;
+    }
+
+    // Sub-level: "가. ..." with exactly two leading spaces.
+    const sub = trimmed.match(/^([가-하])\.\s+/);
+    if (sub) {
+      raw = `  ${sub[1]}. ${trimmed.replace(/^([가-하])\.\s+/, "")}`;
+      out.push(raw);
+      prevPrefixLen = `  ${sub[1]}. `.length;
+      prevWasMarker = true;
+      continue;
+    }
+
+    // Attachment lines: keep as-is, but set continuation indent to align after marker.
+    const isAttachment = trimmed.startsWith("붙임");
+    const attNum = trimmed.match(/^(\d+)\.\s+/);
+    if (isAttachment) {
+      out.push(raw);
+      const m = trimmed.match(/^붙임\s+\d+\.\s+/);
+      prevPrefixLen = m ? m[0].length : 0;
+      prevWasMarker = true;
+      continue;
+    }
+    if (!isAttachment && attNum && /^\s+\d+\.\s+/.test(raw)) {
+      // Indented attachment item "  2. ..." keep but align to its own prefix.
+      out.push(raw);
+      prevPrefixLen = raw.match(/^\s*\d+\.\s+/)?.[0].length || 0;
+      prevWasMarker = true;
+      continue;
+    }
+
+    // Continuation line: if previous line started with a marker, align text to marker content.
+    // Keep this conservative: only indent when the line isn't already indented.
+    if (prevWasMarker && prevPrefixLen > 0 && raw.match(/^\S/)) {
+      out.push(`${" ".repeat(prevPrefixLen)}${trimmed}`);
+      prevWasMarker = false;
+      continue;
+    }
+
+    out.push(raw);
+    prevPrefixLen = 0;
+    prevWasMarker = false;
+  }
+
+  return joinWithFooter(out, footer);
 }
 
 function findLastNonEmptyIndex(lines) {

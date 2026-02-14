@@ -5,3 +5,8 @@ node_modules/
 .env.*
 .DS_Store
 firebase-debug.log
+
+# Reference docs (large) kept local; do not commit.
+BBS_*.pdf
+pdf2png.zip
+c61f4979-*.png
