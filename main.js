@@ -14,25 +14,8 @@ const submitButton = form.querySelector("button[type='submit']");
 setDefaultDate();
 setStatus("주제를 입력한 뒤 공문 생성을 누르면 AI가 전체 공문을 작성합니다.");
 
-let lastAutoDetails = "";
-
-useAttachmentPhraseInput?.addEventListener("change", () => {
-  maybeAutoFillDetails();
-});
-
-subjectInput.addEventListener("input", () => {
-  maybeAutoFillDetails();
-});
-
-attachmentsInput.addEventListener("input", () => {
-  maybeAutoFillDetails();
-});
-
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-
-  // 체크박스가 켜져 있고 핵심 내용이 비어 있으면, 주제 기반 문구를 자동으로 채운다.
-  maybeAutoFillDetails({ force: true });
 
   const payload = collectFormData();
   const subject = payload.subject;
@@ -137,49 +120,4 @@ function formatDate(rawDate) {
 
 function setStatus(message) {
   statusText.textContent = message;
-}
-
-function maybeAutoFillDetails(options = {}) {
-  const { force = false } = options;
-  if (!useAttachmentPhraseInput?.checked) {
-    return;
-  }
-
-  const subject = subjectInput.value.trim();
-  if (!subject) {
-    return;
-  }
-
-  const attachments = attachmentsInput.value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  const particle = pickEulReul(subject);
-  const phrase = attachments.length ? "붙임과 같이 시행하고자 합니다." : "아래와 같이 시행하고자 합니다.";
-  const autoText = `${subject}${particle} ${phrase}`;
-
-  const current = detailsInput.value.trim();
-  const isEmpty = current.length === 0;
-  const isLastAuto = lastAutoDetails && current === lastAutoDetails;
-
-  if (force || isEmpty || isLastAuto) {
-    detailsInput.value = autoText;
-    lastAutoDetails = autoText;
-  }
-}
-
-function pickEulReul(text) {
-  const value = String(text || "").trim();
-  const ch = value.charAt(value.length - 1);
-  const code = ch.charCodeAt(0);
-
-  // Hangul syllables block
-  if (code >= 0xac00 && code <= 0xd7a3) {
-    const jong = (code - 0xac00) % 28;
-    return jong === 0 ? "를" : "을";
-  }
-
-  // Fallback: default to "을" for safety with consonant-ending latin, otherwise "를".
-  return /[bcdfghjklmnpqrstvwxz]$/i.test(value) ? "을" : "를";
 }

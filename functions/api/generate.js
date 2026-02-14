@@ -124,11 +124,13 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments, u
   const subjectBasedDetails = buildSubjectBasedDetails(subject, attachments);
 
   const attachmentSentenceRule = useAttachmentPhrase
-    ? "본문 도입 문장에서 제목(주제)과 연결해 '... 관련하여(또는 ...을(를) 위하여) 붙임과 같이 시행하고자 합니다.' 형태로 1회 포함하되, '1. 붙임과 같이 시행하고자 합니다.'처럼 단독 문장만 출력하지 말 것. 붙임이 0개면 '붙임과 같이' 대신 '아래와 같이'로 대체할 것."
+    ? `본문에는 아래 문장을 반드시 포함하되(1회), '1. 붙임과 같이 시행하고자 합니다.'처럼 단독 문장만 출력하지 말 것: "${subjectBasedDetails}" 붙임이 0개인 경우에는 문장 내 '붙임과 같이' 대신 '아래와 같이'가 포함되게 할 것.`
     : "본문에는 관행적인 붙임 문구를 임의로 추가하지 말 것.";
 
   const detailsRule = isDetailsEmpty
-    ? `핵심 내용이 비어 있으면, 아래 문장을 본문 1항에 반드시 포함하여 제목과 연결할 것: "${subjectBasedDetails}". 그 외 목적/추진내용/협조사항은 결재 가능한 수준으로 1~3개 항목만 추가하되, 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것.`
+    ? useAttachmentPhrase
+      ? `핵심 내용이 비어 있으면, 본문 1항의 첫 문장으로 "${subjectBasedDetails}"를 사용하고, 그 외 목적/추진내용/협조사항은 결재 가능한 수준으로 1~3개 항목만 추가할 것. 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것.`
+      : "핵심 내용이 비어 있으면, 제목(주제)을 바탕으로 목적/추진내용/협조사항을 결재 가능한 수준으로 2~4개 항목으로 구성하되, 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것."
     : "핵심 내용이 있으면 입력 내용을 우선 반영해 목적/추진내용/협조사항을 구체화할 것.";
 
   return [
@@ -139,7 +141,7 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments, u
     `- 제목: ${subject}`,
     `- 시행일: ${date || "오늘 날짜 형식 유지"}`,
     `- 발신: ${sender}`,
-    `- 핵심 내용: ${details || subjectBasedDetails}`,
+    `- 핵심 내용: ${details || "미기재"}`,
     `- 붙임: ${attachmentInput}`,
     "",
     "[작성 규칙]",
