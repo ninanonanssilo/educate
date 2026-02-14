@@ -55,7 +55,7 @@ curl -X POST http://127.0.0.1:8788/api/generate \
     "recipient":"내부결재",
     "sender":"판교대장초등학교장",
     "date":"2026. 2. 14.",
-    "details":"일시, 장소, 대상, 협조사항",
+    "details":"일시, 장소, 대상, 유의사항",
     "attachments":["운영 계획(안) 1부"]
   }'
 ```

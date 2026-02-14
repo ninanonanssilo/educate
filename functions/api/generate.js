@@ -131,6 +131,11 @@ function pickEulReul(text) {
   return /[bcdfghjklmnpqrstvwxz]$/i.test(value) ? "을" : "를";
 }
 
+function isPlanSubject(subject) {
+  const s = String(subject || "").trim();
+  return s.includes("계획");
+}
+
 function buildPrompt({ subject, recipient, via, sender, date, details, attachments, useAttachmentPhrase, tone, docno, owner, contact, related }) {
   const attachmentInput = attachments.length
     ? attachments.map((item, index) => `${index + 1}. ${item}`).join("\n")
@@ -140,22 +145,42 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
 
   const isDetailsEmpty = !String(details || "").trim();
   const subjectBasedDetails = buildSubjectBasedDetails(subject, attachments);
+  const isPlan = isPlanSubject(subject);
 
   const attachmentSentenceRule = useAttachmentPhrase
     ? `본문에는 아래 문장을 반드시 포함하되(1회), '1. 붙임과 같이 시행하고자 합니다.'처럼 단독 문장만 출력하지 말 것: "${subjectBasedDetails}" 붙임이 0개인 경우에는 문장 내 '붙임과 같이' 대신 '아래와 같이'가 포함되게 할 것.`
     : "본문에는 관행적인 붙임 문구를 임의로 추가하지 말 것.";
 
+  const planRule = isPlan
+    ? [
+      "계획 공문 보강 규칙:",
+      "- 제목이 '계획/운영 계획/실시 계획/추진 계획/계획(안)' 성격이면, 본문 소항목에 아래 요소를 누락 없이 반영할 것(표현은 자연스럽게 조정 가능).",
+      "  가. 목적",
+      "  나. 추진 내용(핵심 활동/절차)",
+      "  다. 추진 일정/절차(불확실하면 '추후 안내' 또는 '붙임 참조')",
+      "  라. 추진 체계(업무 분장/담당/협의 방식 중 1개 이상 포함)",
+      "  마. 안전·개인정보·유의사항(필요 시)",
+      "- 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말 것.",
+    ].join("\n")
+    : "";
+
   const detailsRule = isDetailsEmpty
     ? useAttachmentPhrase
-      ? `핵심 내용이 비어 있으면, 본문 1항의 첫 문장으로 "${subjectBasedDetails}"를 사용하고, 그 외 목적/추진내용/협조사항은 결재 가능한 수준으로 1~3개 항목만 추가할 것. 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것.`
-      : "핵심 내용이 비어 있으면, 제목(주제)을 바탕으로 목적/추진내용/협조사항을 결재 가능한 수준으로 2~4개 항목으로 구성하되, 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것."
-    : "핵심 내용이 있으면 입력 내용을 우선 반영해 목적/추진내용/협조사항을 구체화할 것.";
+      ? isPlan
+        ? `핵심 내용이 비어 있으면, 본문 1항의 첫 문장으로 "${subjectBasedDetails}"를 사용하고, 위 '계획 공문 보강 규칙'의 요소를 중심으로 결재 가능한 수준으로 소항목을 구성할 것. 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것.`
+        : `핵심 내용이 비어 있으면, 본문 1항의 첫 문장으로 "${subjectBasedDetails}"를 사용하고, 그 외 목적/추진내용/유의사항은 결재 가능한 수준으로 1~3개 항목만 추가할 것. 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것.`
+      : isPlan
+        ? "핵심 내용이 비어 있으면, 제목(주제)을 바탕으로 '계획 공문 보강 규칙'의 요소를 중심으로 소항목을 구성하되, 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것."
+        : "핵심 내용이 비어 있으면, 제목(주제)을 바탕으로 목적/추진내용/유의사항을 결재 가능한 수준으로 2~4개 항목으로 구성하되, 날짜/시간/장소 등 구체 정보는 임의로 지어내지 말고 '붙임 참조' 또는 '추후 안내'로 처리할 것."
+    : isPlan
+      ? "핵심 내용이 있으면 입력 내용을 우선 반영하되, '계획 공문 보강 규칙'의 요소 중 누락된 부분(일정/절차, 업무분장, 안전 유의 등)이 있으면 과하지 않게 보완할 것."
+      : "핵심 내용이 있으면 입력 내용을 우선 반영해 목적/추진내용/유의사항을 구체화할 것.";
 
   const toneRule =
     tone === "concise"
       ? "문체는 간결하게(불필요한 수식 최소), 항목 수는 2~4개 수준으로 제한."
       : tone === "friendly"
-        ? "문체는 공손하고 친절하게(안내/협조 요청 표현을 부드럽게) 작성."
+        ? "문체는 공손하고 친절하게(안내 표현을 부드럽게) 작성."
         : "문체는 일반적인 학교 행정 문체로 작성.";
 
   const footerRule = [
@@ -215,6 +240,7 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
     "- 붙임 항목 각 줄은 마침표(.)로 끝나게 할 것.",
     `- ${attachmentSentenceRule}`,
+    ...(planRule ? [`- ${planRule}`] : []),
     `- ${detailsRule}`,
     `- ${toneRule}`,
     footerRule,

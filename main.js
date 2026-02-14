@@ -956,7 +956,7 @@ const TEMPLATES = [
     label: "유관기관 협조 요청",
     subject: "유관기관 협조 요청(안)",
     details:
-      "- 목적: 학교 교육활동 지원을 위한 유관기관 협력\n- 추진 내용: 협조 요청 내용 및 범위 정리, 일정 조율, 안전 및 운영 사항 협의\n- 협조 요청: 관련 기관의 협조 및 회신 요청\n- 유의 사항: 학생 관련 내용 공유 시 비식별 및 동의 절차 준수",
+      "- 목적: 학교 교육활동 지원을 위한 유관기관 협력\n- 추진 내용: 협조 요청 배경 및 필요성, 요청 범위(장소/인력/자료/후원 등) 정리, 사전 협의 사항 확인\n- 협조 요청: (1) 협조 가능 여부 회신, (2) 협조 가능 범위 및 조건(비용/제공 가능 자원) 안내, (3) 담당자 지정\n- 회신 요청: 회신 기한 및 회신 방법(공문/메일/유선 등)은 (추후 안내 또는 붙임 참조)\n- 유의 사항: 학생 관련 정보 제공 시 비식별·동의 절차 준수, 안전·보험·책임 범위는 사전 협의",
     attachments: ["협조 요청서(안) 1부"],
   },
   {
@@ -1233,10 +1233,11 @@ applyTemplateBtn.addEventListener("click", () => {
     return;
   }
 
-  subjectInput.value = tpl.subject;
-  detailsInput.value = tpl.details;
+  const view = sanitizeTemplateForQuickUse(tpl);
+  subjectInput.value = view.subject;
+  detailsInput.value = view.details;
   attachmentsInput.value = (tpl.attachments || []).join("\n");
-  setStatus(`템플릿을 적용했습니다: ${tpl.label}`);
+  setStatus(`템플릿을 적용했습니다: ${view.label}`);
   persistFormState();
   subjectInput.focus();
 });
@@ -1527,22 +1528,24 @@ function initTemplates() {
     .sort((a, b) => {
       const ac = String(a.category || "").localeCompare(String(b.category || ""), "ko");
       if (ac !== 0) return ac;
-      return String(a.label || "").localeCompare(String(b.label || ""), "ko");
+      return String(normalizeQuickTemplateLabel(a.label) || "").localeCompare(String(normalizeQuickTemplateLabel(b.label) || ""), "ko");
     });
 
   for (const tpl of sorted) {
+    const view = sanitizeTemplateForQuickUse(tpl);
     const category = String(tpl.category || "기타");
     const opt = document.createElement("option");
     opt.value = tpl.id;
-    opt.textContent = `${category} · ${tpl.label}`;
+    opt.textContent = `${category} · ${view.label}`;
     templateSelect.appendChild(opt);
   }
 }
 
 function templateMatchesQuery(tpl, query) {
+  const view = sanitizeTemplateForQuickUse(tpl);
   const cat = String(tpl.category || "").toLowerCase();
-  const label = String(tpl.label || "").toLowerCase();
-  const subject = String(tpl.subject || "").toLowerCase();
+  const label = String(view.label || "").toLowerCase();
+  const subject = String(view.subject || "").toLowerCase();
   return cat.includes(query) || label.includes(query) || subject.includes(query);
 }
 
@@ -1550,9 +1553,74 @@ function normalizeQuery(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeQuickTemplateLabel(label) {
+  // 빠른 템플릿 표시용: "운영" -> "운영 계획" (이미 "운영 계획"이면 중복 치환하지 않음)
+  return String(label || "")
+    .replace(/운영(?!\s*계획)/g, "운영 계획")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function stripCoopFromSubject(subject) {
+  // 제목/주제에서 협조 관련 표현 제거
+  let s = String(subject || "");
+  s = s.replace(/및\s*협조\s*요청/g, "");
+  s = s.replace(/협조\s*요청/g, "");
+  s = s.replace(/협조/g, "");
+  s = s.replace(/\s+\(/g, "(");
+  s = s.replace(/\(\s+/g, "(");
+  s = s.replace(/\s+\)/g, ")");
+  s = s.replace(/\s{2,}/g, " ").trim();
+  s = s.replace(/\s*및\s*$/g, "").trim();
+  return s;
+}
+
+function stripCoopFromDetails(details) {
+  const lines = String(details || "").split("\n");
+  const kept = [];
+  for (let line of lines) {
+    // "협조 요청" 소항목은 제거
+    if (/^\s*-\s*협조\s*요청\s*:/.test(line)) continue;
+
+    line = line.replace(/협조\s*요청/g, "");
+    line = line.replace(/협조\s*\(/g, "(");
+    line = line.replace(/협조/g, "");
+    line = line.replace(/\s+\(/g, "(");
+    line = line.replace(/\(\s+/g, "(");
+    line = line.replace(/\s+\)/g, ")");
+    line = line.replace(/\s+,/g, ",");
+    line = line.replace(/\s{2,}/g, " ").trim();
+
+    if (line) kept.push(line);
+  }
+  return kept.join("\n").trim();
+}
+
+function sanitizeTemplateForQuickUse(tpl) {
+  return {
+    ...tpl,
+    label: normalizeQuickTemplateLabel(tpl?.label),
+    subject: stripCoopFromSubject(tpl?.subject),
+    details: stripCoopFromDetails(tpl?.details),
+  };
+}
+
+function shouldExcludeTemplateFromQuickList(tpl) {
+  const subject = String(tpl?.subject || "");
+  const category = String(tpl?.category || "");
+
+  // 대외 협조 성격 템플릿은 빠른 템플릿에서 제외
+  if (tpl?.id === "external-cooperation" || category.includes("대외")) return true;
+
+  const isCoopRequest = subject.includes("협조 요청");
+  const isPlan = subject.includes("계획");
+  return isCoopRequest && !isPlan;
+}
+
 function getFilteredTemplates(query) {
-  if (!query) return TEMPLATES.slice();
-  return TEMPLATES.filter((t) => templateMatchesQuery(t, query));
+  const base = TEMPLATES.filter((t) => !shouldExcludeTemplateFromQuickList(t));
+  if (!query) return base.slice();
+  return base.filter((t) => templateMatchesQuery(t, query));
 }
 
 function wireTemplateSearch() {
