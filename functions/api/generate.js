@@ -21,6 +21,7 @@ export async function onRequestPost(context) {
     const date = String(body.date || "").trim();
     const details = String(body.details || "").trim();
     const attachments = Array.isArray(body.attachments) ? body.attachments : [];
+    const useAttachmentPhrase = Boolean(body.useAttachmentPhrase);
 
     if (!subject) {
       return json({ error: "subject is required." }, 400);
@@ -33,6 +34,7 @@ export async function onRequestPost(context) {
       date,
       details,
       attachments,
+      useAttachmentPhrase,
     });
 
     const response = await fetch(OPENAI_URL, {
@@ -96,10 +98,14 @@ function sanitizeModel(raw) {
   return value;
 }
 
-function buildPrompt({ subject, recipient, sender, date, details, attachments }) {
+function buildPrompt({ subject, recipient, sender, date, details, attachments, useAttachmentPhrase }) {
   const attachmentInput = attachments.length
     ? attachments.map((item, index) => `${index + 1}. ${item}`).join("\n")
     : "(없음)";
+
+  const attachmentSentenceRule = useAttachmentPhrase
+    ? "본문에는 '붙임과 같이 시행하고자 합니다.' 문장을 1회 포함하되, 붙임이 0개면 '아래와 같이 시행하고자 합니다.'로 대체할 것."
+    : "본문에는 관행적인 붙임 문구를 임의로 추가하지 말 것.";
 
   return [
     "아래 정보를 바탕으로 한국 학교 내부결재용 공문을 작성해줘.",
@@ -128,6 +134,7 @@ function buildPrompt({ subject, recipient, sender, date, details, attachments })
     "- 붙임이 1개면 '붙임  1. <항목>' 1줄만 표기.",
     "- 붙임이 여러 개면 '붙임' 아래에 1., 2., 3. ...으로 줄바꿈하여 모두 표기.",
     "- 붙임 항목 문구는 입력값을 우선 사용(불필요한 임의 생성/추가 금지).",
+    `- ${attachmentSentenceRule}`,
     "",
     "붙임(표기 예시)",
     "붙임  1. 운영 계획(안) 1부",

@@ -5,6 +5,7 @@ const senderInput = document.getElementById("sender");
 const dateInput = document.getElementById("date");
 const detailsInput = document.getElementById("details");
 const attachmentsInput = document.getElementById("attachments");
+const useAttachmentPhraseInput = document.getElementById("use-attachment-phrase");
 const result = document.getElementById("result");
 const copyBtn = document.getElementById("copy-btn");
 const statusText = document.getElementById("status");
@@ -65,6 +66,7 @@ function collectFormData() {
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean),
+    useAttachmentPhrase: Boolean(useAttachmentPhraseInput?.checked),
   };
 }
 
