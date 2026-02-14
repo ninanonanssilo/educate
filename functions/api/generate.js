@@ -497,7 +497,10 @@ function buildAttachmentLines(attachments) {
     return [`붙임  ${ensurePeriod(cleaned[0])}  끝.`];
   }
 
-  const indent = "        ";
+  // Keep the numbering column aligned like common 공문 formatting:
+  // "붙임 1." then next lines are indented so "2." starts under "1.".
+  // With Hangul often rendered as double-width, 5 spaces visually aligns under "붙임 1.".
+  const indent = "     ";
   const out = [];
   out.push(`붙임 1. ${ensurePeriod(cleaned[0])}`);
 
