@@ -517,7 +517,9 @@ function buildAttachmentLines(attachments) {
   // - 첫 줄: "붙임␠␠1. ..."
   // - 다음 줄: 번호가 1과 같은 위치(= "붙임␠␠" 길이만큼 공백)에서 시작
   const prefix = "붙임  "; // 붙임 + 공백 2칸
-  const indent = "    "; // plain-text에서 "붙임  "에 대응하는 들여쓰기(가시성/정렬용)
+  // textarea/monospace에서 한글이 보통 전각(2칸)으로 잡히는 점을 감안해
+  // "붙임(전각 2자=4칸) + 공백 2칸" => 총 6칸 들여쓰기로 정렬한다.
+  const indent = "      "; // 6 spaces
   const out = [];
   out.push(`${prefix}1. ${ensurePeriod(cleaned[0])}`);
 
