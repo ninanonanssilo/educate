@@ -87,8 +87,8 @@ body {
 .page {
   margin-top: 18px;
   display: grid;
-  /* Make the result panel wider on desktop */
-  grid-template-columns: 0.92fr 1.08fr;
+  /* Keep the left form readable, give the result panel the remaining width. */
+  grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -139,6 +139,7 @@ h3 {
   grid-template-columns: 0.95fr 1.05fr;
   gap: 10px;
   align-items: end;
+  min-width: 0;
 }
 
 .template-search-wrap {
@@ -159,6 +160,7 @@ h3 {
   gap: 6px;
   font-weight: 700;
   font-size: 14px;
+  min-width: 0;
 }
 
 .btn-stack {
@@ -173,6 +175,12 @@ h3 {
 .template-row select,
 .template-row .template-btn {
   height: 44px;
+}
+
+.template-row input[type="search"],
+.template-row select {
+  width: 100%;
+  min-width: 0;
 }
 
 .template-row .template-btn {
