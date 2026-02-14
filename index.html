@@ -1,796 +1,183 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="light" />
   <title>학교 공문 자동 작성 도우미</title>
-  <meta name="description" content="학교 공문 초안을 빠르게 생성하고 복사/다운로드할 수 있는 자동 작성 도우미입니다." />
+  <meta name="description" content="학교 공문 초안을 빠르게 생성하고 복사할 수 있는 자동 작성 도우미입니다." />
   <meta property="og:site_name" content="학교 공문 자동 작성 도우미" />
   <meta property="og:title" content="학교 공문 자동 작성 도우미" />
-  <meta property="og:description" content="학교 공문 초안을 빠르게 생성하고 복사/다운로드할 수 있는 자동 작성 도우미입니다." />
+  <meta property="og:description" content="학교 공문 초안을 빠르게 생성하고 복사할 수 있는 자동 작성 도우미입니다." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://educate1.pages.dev/" />
   <link rel="canonical" href="https://educate1.pages.dev/" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="학교 공문 자동 작성 도우미" />
-  <meta name="twitter:description" content="학교 공문 초안을 빠르게 생성하고 복사/다운로드할 수 있는 자동 작성 도우미입니다." />
-
-  <style>
-    /* =======================
-       0) Reset / Base
-    ======================= */
-    *, *::before, *::after { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      line-height: 1.5;
-      background: #eef6f7;
-      color: #0f172a;
-      width: 100%;
-      max-width: 100%;
-      overflow-x: clip; /* iOS 오른쪽 삐져나옴 방지 */
-    }
-    img, svg, video, canvas { max-width: 100%; height: auto; }
-    input, textarea, select, button { font: inherit; }
-    a { color: inherit; text-decoration: none; }
-
-    :root{
-      --bg: #eef6f7;
-      --card: #ffffff;
-      --muted: #64748b;
-      --border: rgba(15, 23, 42, 0.12);
-      --shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-      --radius: 18px;
-      --pad: clamp(14px, 3.5vw, 20px);
-      --gap: 14px;
-
-      --primary: #1e88e5;
-      --primary-weak: rgba(30,136,229,0.10);
-      --success: #16a34a;
-      --danger: #ef4444;
-    }
-
-    /* =======================
-       1) Layout Container
-    ======================= */
-    .page {
-      width: 100%;
-      max-width: 1100px;
-      margin-inline: auto;
-      padding-inline: clamp(14px, 4vw, 28px);
-      padding-top: max(16px, env(safe-area-inset-top));
-      padding-bottom: max(24px, env(safe-area-inset-bottom));
-      padding-left: max(clamp(14px, 4vw, 28px), env(safe-area-inset-left));
-      padding-right: max(clamp(14px, 4vw, 28px), env(safe-area-inset-right));
-    }
-
-    /* =======================
-       2) Header
-    ======================= */
-    .hero {
-      background: linear-gradient(120deg, #0ea5e9, #22c55e);
-      border-radius: 22px;
-      padding: 22px;
-      box-shadow: var(--shadow);
-      color: white;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::after{
-      content:"";
-      position:absolute; inset:-40%;
-      background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 55%);
-      transform: rotate(18deg);
-      pointer-events:none;
-    }
-    .hero h1 { margin: 0 0 6px; font-size: clamp(22px, 4vw, 34px); letter-spacing: -0.02em; }
-    .hero p { margin: 0; opacity: 0.92; font-size: clamp(14px, 2.8vw, 16px); }
-
-    /* =======================
-       3) Card System
-    ======================= */
-    .stack { display: grid; gap: 14px; margin-top: 14px; }
-    .card {
-      width: 100%;
-      max-width: 100%;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .cardHeader { padding: var(--pad); padding-bottom: 0; }
-    .cardTitle { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
-    .cardDesc { margin: 8px 0 0; color: var(--muted); }
-    .cardBody { padding: var(--pad); }
-    .note {
-      background: #f1f5f9;
-      border: 1px solid rgba(15, 23, 42, 0.10);
-      border-radius: 14px;
-      padding: 12px 14px;
-      color: #334155;
-      font-size: 14px;
-    }
-
-    /* =======================
-       4) Form Layout
-    ======================= */
-    form { margin: 0; }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: var(--gap);
-    }
-    @media (min-width: 900px){
-      .grid { grid-template-columns: 1fr 1fr; }
-      .span2 { grid-column: 1 / -1; }
-    }
-    .field { min-width: 0; }
-    .labelRow {
-      display:flex; justify-content: space-between; align-items: baseline;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-    label { font-weight: 700; }
-    .hint { color: var(--muted); font-size: 12px; font-weight: 500; }
-
-    .input, .select, .textarea {
-      width: 100%;
-      max-width: 100%;
-      border: 1px solid rgba(15, 23, 42, 0.16);
-      border-radius: 14px;
-      padding: 12px 12px;
-      background: white;
-      outline: none;
-      transition: border-color .15s ease, box-shadow .15s ease;
-      font-size: 16px; /* iOS 자동 확대 방지 */
-    }
-    .textarea { min-height: 120px; resize: vertical; }
-    .input:focus, .select:focus, .textarea:focus {
-      border-color: rgba(30,136,229,0.65);
-      box-shadow: 0 0 0 4px rgba(30,136,229,0.16);
-    }
-
-    .dashed {
-      border: 2px dashed rgba(34,197,94,0.35);
-      background: rgba(34,197,94,0.03);
-      border-radius: 18px;
-      padding: var(--pad);
-    }
-
-    /* =======================
-       5) Buttons / Actions
-    ======================= */
-    .btn {
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap: 8px;
-      border-radius: 14px;
-      border: 1px solid rgba(30,136,229,0.35);
-      background: white;
-      color: #0b5fb7;
-      padding: 12px 14px;
-      min-height: 48px;
-      cursor:pointer;
-      user-select:none;
-      transition: transform .06s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
-      width: 100%;
-    }
-    .btn:hover { background: rgba(30,136,229,0.06); }
-    .btn:active { transform: scale(0.99); }
-    .btnPrimary{
-      background: var(--primary);
-      border-color: rgba(30,136,229,0.9);
-      color: white;
-    }
-    .btnPrimary:hover{ background: #1976d2; }
-    .btnGhost{
-      border-color: rgba(15, 23, 42, 0.16);
-      color: #0f172a;
-    }
-    .btn:disabled{
-      opacity: .55;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .actions2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      width: 100%;
-    }
-    @media (max-width: 360px){
-      .actions2 { grid-template-columns: 1fr; }
-    }
-
-    .divider { height: 1px; background: rgba(15,23,42,0.10); margin: 14px 0; }
-
-    /* =======================
-       6) Result Box
-    ======================= */
-    .resultWrap { display: grid; gap: 12px; }
-    .resultBox {
-      width: 100%;
-      max-width: 100%;
-      min-height: 260px;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      overflow-x: auto;
-      font-family:
-        ui-monospace,
-        SFMono-Regular,
-        Menlo,
-        Consolas,
-        "D2Coding",
-        monospace;
-      line-height: 1.45;
-    }
-    .mutedText { color: var(--muted); font-size: 14px; }
-
-    /* =======================
-       7) Toast
-    ======================= */
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: max(18px, env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      background: rgba(15,23,42,0.92);
-      color: white;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 14px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s ease, transform .2s ease;
-    }
-    .toast.show{
-      opacity: 1;
-      transform: translateX(-50%) translateY(-2px);
-    }
-
-    footer { color: var(--muted); text-align:center; padding: 18px 0 6px; font-size: 12px; }
-    .links h3 { margin: 0 0 8px; font-size: 16px; }
-    .links a { color: #0b5fb7; text-decoration: underline; text-underline-offset: 3px; }
-  </style>
+  <meta name="twitter:description" content="학교 공문 초안을 빠르게 생성하고 복사할 수 있는 자동 작성 도우미입니다." />
+  <link href="/style.css?v=20260214-20" rel="stylesheet" />
 </head>
-
 <body>
-  <main class="page">
-    <header class="hero">
+  <header class="hero">
+    <div class="hero-top">
       <h1>학교 공문 자동 작성 도우미</h1>
-      <p>AI와 함께하는 학교 업무 효율화</p>
-    </header>
+      <p class="hero-desc">AI와 함께하는 학교 업무 효율화</p>
+    </div>
+  </header>
 
-    <section class="stack">
-      <article class="card" id="composeCard">
-        <div class="cardHeader">
-          <h2 class="cardTitle">공문 자동 작성</h2>
-          <p class="cardDesc">주제와 핵심 내용을 입력하면 결재용 공문 초안이 바로 생성됩니다.</p>
+  <main class="page">
+    <section class="card writer">
+      <h2>공문 자동 작성</h2>
+      <p class="description">주제와 핵심 내용을 입력하면 결재용 공문 초안이 바로 생성됩니다.</p>
+      <p class="helper" role="note">
+        개인정보(학생/학부모/교직원 실명, 연락처, 주민등록번호 등)는 입력하지 마세요. 민감 정보는 "홍길동(가명)"처럼 비식별 처리 후 작성하세요.
+      </p>
+
+      <form id="doc-form" class="form">
+        <div class="template-row" aria-label="빠른 템플릿">
+          <div class="template-pickers">
+            <div class="template-search-wrap">
+              <label class="template-label" for="template-search">
+                템플릿 검색
+                <input id="template-search" type="search" placeholder="예: 생활기록부, 연수, 졸업식" autocomplete="off" />
+              </label>
+            </div>
+            <label class="template-label template-select-wrap">
+              빠른 템플릿
+              <select id="template" name="template">
+                <option value="">선택 안 함</option>
+              </select>
+            </label>
+          </div>
+          <button type="button" id="apply-template-btn" class="template-btn template-apply">템플릿 적용</button>
+          <button type="button" id="reset-btn" class="template-btn template-reset" aria-label="입력 초기화">
+            <span class="btn-stack">
+              <span>입력</span>
+              <span>초기화</span>
+            </span>
+          </button>
+          <p id="template-search-hint" class="template-hint" aria-live="polite"></p>
         </div>
 
-        <div class="cardBody">
-          <div class="note">
-            개인정보(학생/학부모/교직원 실명, 연락처, 주민등록번호 등)는 입력하지 마세요.
-            민감 정보는 "홍길동(가명)"처럼 비식별 처리 후 작성하세요.
+        <label for="subject">공문 주제</label>
+        <input id="subject" name="subject" type="text" placeholder="예: 2026학년도 학부모 공개수업 운영 계획" required />
+
+        <label for="related">관련 문서(선택)</label>
+        <textarea id="related" name="related" rows="2" placeholder="줄바꿈으로 여러 개 입력 가능&#10;예: 경기도교육청 학교안전과-1234(2026. 2. 1.)"></textarea>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="recipient">수신(기본: 내부결재)</label>
+            <input id="recipient" name="recipient" type="text" value="내부결재" />
           </div>
+          <div class="field">
+            <label for="via">경유(선택)</label>
+            <input id="via" name="via" type="text" placeholder="예: 교무부장" />
+          </div>
+        </div>
 
-          <div style="height:12px"></div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="date">시행일</label>
+            <input id="date" name="date" type="date" />
+          </div>
+          <div class="field">
+            <label for="sender">발신 기관(부서)</label>
+            <input id="sender" name="sender" type="text" value="00초등학교장" />
+          </div>
+        </div>
 
-          <div class="dashed">
-            <div class="grid">
-              <div class="field span2">
-                <div class="labelRow">
-                  <label for="templateSearch">템플릿 검색</label>
-                  <span class="hint">키워드로 빠르게</span>
-                </div>
-                <input class="input" id="templateSearch" placeholder="예: 생활기록부, 연수, 졸업식" />
-              </div>
+        <label for="details">본문 핵심 내용</label>
+        <textarea id="details" name="details" rows="4" placeholder="예: 목적, 추진 내용, 협조 요청, 일정(미확정이면 '추후 안내'로)"></textarea>
 
-              <div class="field span2">
-                <div class="labelRow">
-                  <label for="quickTemplate">빠른 템플릿</label>
-                </div>
-                <select class="select" id="quickTemplate">
-                  <option value="">선택 안 함</option>
-                  <option value="행사 안내">행사 안내</option>
-                  <option value="학부모 공개수업">학부모 공개수업</option>
-                  <option value="연수 안내">연수 안내</option>
-                  <option value="공모/모집 안내">공모/모집 안내</option>
-                </select>
-              </div>
+        <label for="attachments">붙임 항목 (줄바꿈으로 구분)</label>
+        <textarea id="attachments" name="attachments" rows="3" placeholder="예:&#10;운영 계획(안) 1부&#10;학년별 운영 시간표 1부"></textarea>
 
-              <div class="field span2 actions2">
-                <button class="btn" type="button" id="applyTemplateBtn">템플릿 적용</button>
-                <button class="btn btnGhost" type="button" id="resetBtn">입력 초기화</button>
-              </div>
+        <details class="advanced">
+          <summary>고급 옵션 (선택)</summary>
+          <div class="advanced-grid">
+            <div class="field">
+              <label for="tone">문체</label>
+              <select id="tone" name="tone">
+                <option value="default" selected>기본(행정 문체)</option>
+                <option value="concise">간결</option>
+                <option value="friendly">친절</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="docno">문서번호(선택)</label>
+              <input id="docno" name="docno" type="text" placeholder="예: 2026-교무-001" />
+            </div>
+            <div class="field">
+              <label for="owner">담당자(선택)</label>
+              <input id="owner" name="owner" type="text" placeholder="예: 홍길동" />
+            </div>
+            <div class="field">
+              <label for="contact">연락처(선택)</label>
+              <input id="contact" name="contact" type="text" placeholder="예: 02-000-0000" inputmode="tel" />
             </div>
           </div>
+        </details>
 
-          <div class="divider"></div>
-
-          <form id="docForm">
-            <div class="grid">
-              <div class="field span2">
-                <div class="labelRow">
-                  <label for="subject">공문 주제</label>
-                  <span class="hint">필수</span>
-                </div>
-                <input class="input" id="subject" placeholder="예: 2026학년도 학부모 공개수업 운영 계획" required />
-              </div>
-
-              <div class="field span2">
-                <div class="labelRow">
-                  <label for="relatedDocs">관련 문서(선택)</label>
-                  <span class="hint">줄바꿈으로 여러 개</span>
-                </div>
-                <textarea class="textarea" id="relatedDocs" placeholder="예: 경기도교육청 학교안전과-1234(2026. 2. 1.)"></textarea>
-              </div>
-
-              <div class="field">
-                <div class="labelRow">
-                  <label for="recipient">수신(기본: 내부결재)</label>
-                </div>
-                <input class="input" id="recipient" value="내부결재" />
-              </div>
-
-              <div class="field">
-                <div class="labelRow">
-                  <label for="via">경유(선택)</label>
-                </div>
-                <input class="input" id="via" placeholder="예: 교무부장" />
-              </div>
-
-              <div class="field">
-                <div class="labelRow">
-                  <label for="date">시행일</label>
-                </div>
-                <input class="input" id="date" type="date" />
-              </div>
-
-              <div class="field">
-                <div class="labelRow">
-                  <label for="sender">발신 기관(부서)</label>
-                </div>
-                <input class="input" id="sender" value="00초등학교장" />
-              </div>
-
-              <div class="field span2">
-                <div class="labelRow">
-                  <label for="details">본문 핵심 내용</label>
-                  <span class="hint">필수</span>
-                </div>
-                <textarea class="textarea" id="details" placeholder="예: 목적, 추진 내용, 협조 요청, 일정(미확정이면 '추후 안내'로)"></textarea>
-              </div>
-
-              <div class="field span2">
-                <div class="labelRow">
-                  <label for="attachments">붙임 항목 (줄바꿈으로 구분)</label>
-                </div>
-                <textarea class="textarea" id="attachments" placeholder="예:\n운영 계획(안) 1부\n학년별 운영 시간표 1부"></textarea>
-              </div>
-
-              <div class="field span2">
-                <details>
-                  <summary style="cursor:pointer; font-weight:800;">고급 옵션 (선택)</summary>
-                  <div style="height:12px"></div>
-
-                  <div class="grid">
-                    <div class="field">
-                      <div class="labelRow"><label for="tone">문체</label></div>
-                      <select class="select" id="tone">
-                        <option value="default">기본(행정 문체)</option>
-                        <option value="concise">간결</option>
-                        <option value="friendly">친절</option>
-                      </select>
-                    </div>
-
-                    <div class="field">
-                      <div class="labelRow"><label for="docNo">문서번호(선택)</label></div>
-                      <input class="input" id="docNo" placeholder="예: OO초-2026-001" />
-                    </div>
-
-                    <div class="field">
-                      <div class="labelRow"><label for="manager">담당자(선택)</label></div>
-                      <input class="input" id="manager" placeholder="예: 홍길동" />
-                    </div>
-
-                    <div class="field">
-                      <div class="labelRow"><label for="phone">연락처(선택)</label></div>
-                      <input class="input" id="phone" placeholder="예: 031-000-0000" />
-                    </div>
-
-                    <div class="field span2">
-                      <label style="display:flex; gap:10px; align-items:center;">
-                        <input type="checkbox" id="autoAttachLine" checked />
-                        붙임 문구 자동 삽입 ("붙임과 같이 시행하고자 합니다.")
-                      </label>
-                    </div>
-                  </div>
-                </details>
-              </div>
-
-              <div class="field span2">
-                <button class="btn btnPrimary" id="generateBtn" type="submit" disabled>공문 생성</button>
-                <div class="mutedText" style="margin-top:8px;">
-                  주제를 입력한 뒤 공문 생성을 누르면 AI가 전체 공문을 작성합니다.
-                </div>
-              </div>
-            </div>
-          </form>
+        <label class="checkbox-row">
+          <input id="use-attachment-phrase" name="useAttachmentPhrase" type="checkbox" checked />
+          <span>붙임 문구 자동 삽입 ("붙임과 같이 시행하고자 합니다.")</span>
+        </label>
+        <div class="actions">
+          <button type="submit" class="primary">공문 생성</button>
         </div>
-      </article>
+      </form>
+    </section>
 
-      <article class="card" id="resultCard">
-        <div class="cardHeader">
-          <h2 class="cardTitle">생성 결과</h2>
+    <section class="card preview">
+      <div class="preview-top">
+        <h2>생성 결과</h2>
+        <div class="preview-actions" aria-label="결과 도구">
+          <button type="button" id="copy-btn">결과 복사</button>
+          <button type="button" id="download-btn">TXT 다운로드</button>
         </div>
-        <div class="cardBody">
-          <div class="actions2">
-            <button class="btn" type="button" id="copyBtn">결과 복사</button>
-            <button class="btn" type="button" id="downloadBtn">TXT 다운로드</button>
-          </div>
-
-          <div style="height:12px"></div>
-
-          <textarea class="textarea resultBox" id="result" spellcheck="false" placeholder="생성된 공문은 여기에서 바로 수정할 수 있습니다. 필요에 맞게 손보고 복사/다운로드하세요."></textarea>
-        </div>
-      </article>
-
-      <article class="card links">
-        <div class="cardHeader">
-          <h2 class="cardTitle">주요 사이트</h2>
-        </div>
-        <div class="cardBody" style="display:grid; gap:12px;">
-          <div>
-            <h3>경기도교육청</h3>
-            <div class="mutedText">경기교육 공지, 자료실, 민원 서비스를 통해 참고 자료를 확인합니다.</div>
-            <div style="margin-top:6px;"><a href="https://www.goe.go.kr/goe/main.do" target="_blank" rel="noreferrer">사이트 열기</a></div>
-          </div>
-          <div>
-            <h3>공문서 예시(PDF)</h3>
-            <div class="mutedText">실제 공문 구성과 표현 방식을 확인합니다.</div>
-            <div style="margin-top:6px;"><a href="https://www.goe.go.kr/resource/old/BBSMSTR_000000000028/BBS_202410150153084250.pdf" target="_blank" rel="noreferrer">예시 문서 열기</a></div>
-          </div>
-          <div>
-            <h3>공문서 작성 기준</h3>
-            <div class="mutedText">공문 필수 기재 항목의 기준을 확인합니다.</div>
-            <div style="margin-top:6px;"><a href="https://www.law.go.kr/LSW/lsInfoP.do?lsId=007319&ancYnChk=0#0000" target="_blank" rel="noreferrer">국가법령정보센터 기준 보기</a></div>
-          </div>
-          <div>
-            <h3>정보공개포털(open.go.kr)</h3>
-            <div class="mutedText">기관별 공개 문서와 공문 사례를 검색해 참고합니다.</div>
-            <div style="margin-top:6px;"><a href="https://www.open.go.kr/com/main/mainView.do?mainBgGubun=search" target="_blank" rel="noreferrer">검색 바로가기</a></div>
-          </div>
-          <div>
-            <h3>학교알리미</h3>
-            <div class="mutedText">전국 학교의 정보를 검색해 참고합니다.</div>
-            <div style="margin-top:6px;"><a href="https://www.schoolinfo.go.kr/" target="_blank" rel="noreferrer">사이트 열기</a></div>
-          </div>
-        </div>
-      </article>
-
-      <footer>Copyright © HONGSEOK LEE. All rights reserved.</footer>
+      </div>
+      <textarea id="result" class="result" spellcheck="false" placeholder="생성된 공문은 여기서 바로 수정할 수 있습니다. 필요에 맞게 손보고 복사/다운로드하세요."></textarea>
+      <p id="status" class="status" aria-live="polite"></p>
     </section>
   </main>
 
-  <div class="toast" id="toast">완료</div>
+  <section class="official-links" aria-label="주요 사이트">
+    <h2>주요 사이트</h2>
+    <div class="link-grid">
+      <article class="link-card">
+        <h3>경기도교육청</h3>
+        <p>경기교육 공지, 자료실, 민원 서비스를 통해 학교 행정 참고 자료를 확인합니다.</p>
+        <a href="https://www.goe.go.kr/goe/main.do" target="_blank" rel="noopener noreferrer">사이트 열기</a>
+      </article>
+      <article class="link-card">
+        <h3>공문서 예시(PDF)</h3>
+        <p>경기도교육청 제공 문서를 참고해 실제 공문 구성과 표현 방식을 확인합니다.</p>
+        <a href="https://www.goe.go.kr/resource/old/BBSMSTR_000000000028/BBS_202410150153084250.pdf" target="_blank" rel="noopener noreferrer">예시 문서 열기</a>
+      </article>
+      <article class="link-card">
+        <h3>공문서 작성 기준</h3>
+        <p>공문 필수 기재 항목의 법적 기준을 확인합니다. 페이지 내 ‘별표·서식’ 메뉴에서 첨부 서식도 함께 확인할 수 있습니다.</p>
+        <a href="https://www.law.go.kr/LSW/lsInfoP.do?lsId=007319&ancYnChk=0#0000" target="_blank" rel="noopener noreferrer">국가법령정보센터 기준 보기</a>
+      </article>
+      <article class="link-card">
+        <h3>정보공개포털(open.go.kr)</h3>
+        <p>기관별 공개 문서와 공문 사례를 키워드/기간으로 검색해 참고합니다.</p>
+        <a href="https://www.open.go.kr/com/main/mainView.do?mainBgGubun=search" target="_blank" rel="noopener noreferrer">검색 바로가기</a>
+      </article>
+      <article class="link-card">
+        <h3>학교알리미</h3>
+        <p>전국 학교의 정보(교육과정, 예·결산, 급식, 학사일정 등)를 검색해 참고합니다.</p>
+        <a href="https://www.schoolinfo.go.kr/" target="_blank" rel="noopener noreferrer">사이트 열기</a>
+      </article>
+    </div>
+  </section>
 
-  <script>
-    const $ = (id) => document.getElementById(id);
+  <footer class="footer">
+    <p>학교 공문 자동 작성 도우미</p>
+    <p>Copyright © HONGSEOK LEE. All rights reserved.</p>
+  </footer>
 
-    function toast(msg){
-      const t = $("toast");
-      t.textContent = msg;
-      t.classList.add("show");
-      clearTimeout(toast._tm);
-      toast._tm = setTimeout(() => t.classList.remove("show"), 1400);
-    }
-
-    function downloadText(filename, text) {
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function formatDate(rawDate) {
-      if (!rawDate) return "";
-      const [year, month, day] = rawDate.split("-");
-      return `${year}. ${Number(month)}. ${Number(day)}.`;
-    }
-
-    // =======================
-    // Form State
-    // =======================
-    const subject = $("subject");
-    const details = $("details");
-    const result = $("result");
-    const generateBtn = $("generateBtn");
-
-    const STORAGE_KEY = "educate1_form_v2_compact_ui";
-
-    function readForm(){
-      return {
-        templateSearch: $("templateSearch").value,
-        quickTemplate: $("quickTemplate").value,
-        subject: subject.value,
-        relatedDocs: $("relatedDocs").value,
-        recipient: $("recipient").value,
-        via: $("via").value,
-        date: $("date").value,
-        sender: $("sender").value,
-        details: details.value,
-        attachments: $("attachments").value,
-        tone: $("tone").value,
-        docno: $("docNo").value,
-        owner: $("manager").value,
-        contact: $("phone").value,
-        useAttachmentPhrase: $("autoAttachLine").checked
-      };
-    }
-
-    function writeForm(data){
-      for (const [k,v] of Object.entries(data || {})){
-        const el = $(k);
-        if (!el) continue;
-        if (el.type === "checkbox") el.checked = !!v;
-        else el.value = v ?? "";
-      }
-    }
-
-    function persist(){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(readForm()));
-    }
-
-    function restore(){
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        writeForm(JSON.parse(raw));
-      } catch {}
-    }
-
-    function validate(){
-      const ok = subject.value.trim().length > 0;
-      generateBtn.disabled = !ok;
-      return ok;
-    }
-
-    // =======================
-    // Template (간단 예시)
-    // =======================
-    const TEMPLATE_MAP = {
-      "행사 안내": { subject: "교내 행사 운영 계획(안)", details: "- 목적:\n- 추진 내용:\n- 협조 요청:\n- 유의 사항:" },
-      "학부모 공개수업": { subject: "학부모 공개수업 운영 계획(안)", details: "- 목적:\n- 추진 내용:\n- 협조 요청:\n- 유의 사항:" },
-      "연수 안내": { subject: "교원 연수 운영 계획(안)", details: "- 목적:\n- 추진 내용:\n- 협조 요청:\n- 유의 사항:" },
-      "공모/모집 안내": { subject: "프로그램 참여자 모집 계획(안)", details: "- 목적:\n- 추진 내용:\n- 협조 요청:\n- 유의 사항:" }
-    };
-
-    $("applyTemplateBtn").addEventListener("click", () => {
-      const t = $("quickTemplate").value;
-      if (!t) return toast("템플릿을 선택하세요");
-      const tpl = TEMPLATE_MAP[t];
-      if (tpl?.subject) subject.value = tpl.subject;
-      if (tpl?.details) details.value = tpl.details;
-      validate();
-      persist();
-      toast("템플릿 적용 완료");
-      $("composeCard").scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    $("resetBtn").addEventListener("click", () => {
-      $("docForm").reset();
-      $("recipient").value = "내부결재";
-      $("sender").value = "00초등학교장";
-      $("autoAttachLine").checked = true;
-      localStorage.removeItem(STORAGE_KEY);
-      result.value = "";
-      validate();
-      toast("초기화 완료");
-      $("composeCard").scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    function wireResultEditorKeys() {
-      const INDENT = "  ";
-
-      const replaceSelection = (text) => {
-        const start = result.selectionStart;
-        const end = result.selectionEnd;
-        const before = result.value.slice(0, start);
-        const after = result.value.slice(end);
-        result.value = before + text + after;
-        const next = start + text.length;
-        result.selectionStart = next;
-        result.selectionEnd = next;
-      };
-
-      const lineStartIndex = (value, idx) => value.lastIndexOf("\n", Math.max(0, idx - 1)) + 1;
-      const lineEndIndex = (value, idx) => {
-        const end = value.indexOf("\n", idx);
-        return end === -1 ? value.length : end;
-      };
-
-      const getBlockBounds = (value, start, end) => {
-        const bStart = lineStartIndex(value, start);
-        const bEnd = lineEndIndex(value, end);
-        return [bStart, bEnd];
-      };
-
-      const indentLine = (line) => INDENT + line;
-      const outdentLine = (line) => {
-        if (line.startsWith(INDENT)) return line.slice(INDENT.length);
-        if (line.startsWith("\t")) return line.slice(1);
-        if (line.startsWith(" ")) return line.slice(1);
-        return line;
-      };
-
-      result.addEventListener("keydown", (e) => {
-        if (e.key === "Tab") {
-          e.preventDefault();
-
-          const value = result.value;
-          const start = result.selectionStart;
-          const end = result.selectionEnd;
-
-          if (start !== end) {
-            const [bStart, bEnd] = getBlockBounds(value, start, end);
-            const block = value.slice(bStart, bEnd);
-            const lines = block.split("\n");
-            const nextLines = e.shiftKey ? lines.map(outdentLine) : lines.map(indentLine);
-            const nextBlock = nextLines.join("\n");
-
-            result.value = value.slice(0, bStart) + nextBlock + value.slice(bEnd);
-            result.selectionStart = bStart;
-            result.selectionEnd = bStart + nextBlock.length;
-            return;
-          }
-
-          if (e.shiftKey) {
-            const ls = lineStartIndex(value, start);
-            const le = lineEndIndex(value, start);
-            const line = value.slice(ls, le);
-            const nextLine = outdentLine(line);
-            const removed = line.length - nextLine.length;
-            result.value = value.slice(0, ls) + nextLine + value.slice(le);
-            const nextPos = Math.max(ls, start - removed);
-            result.selectionStart = nextPos;
-            result.selectionEnd = nextPos;
-            return;
-          }
-
-          replaceSelection(INDENT);
-          return;
-        }
-
-        if (e.key === "Enter") {
-          e.preventDefault();
-
-          const value = result.value;
-          const start = result.selectionStart;
-          const end = result.selectionEnd;
-          const ls = lineStartIndex(value, start);
-          const le = lineEndIndex(value, start);
-          const line = value.slice(ls, le);
-          const indent = (line.match(/^[ \t]+/) || [""])[0];
-
-          const before = value.slice(0, start);
-          const after = value.slice(end);
-          const insert = `\n${indent}`;
-          result.value = before + insert + after;
-          const nextPos = start + insert.length;
-          result.selectionStart = nextPos;
-          result.selectionEnd = nextPos;
-        }
-      });
-    }
-
-    function disableResultDragDrop() {
-      result.addEventListener("dragstart", (e) => e.preventDefault());
-      result.addEventListener("dragover", (e) => e.preventDefault());
-      result.addEventListener("drop", (e) => e.preventDefault());
-    }
-
-    async function generateDraft(payload){
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject: String(payload.subject || "").trim(),
-          recipient: String(payload.recipient || "내부결재").trim(),
-          via: String(payload.via || "").trim(),
-          sender: String(payload.sender || "00초등학교장").trim(),
-          date: formatDate(payload.date),
-          details: String(payload.details || "").trim(),
-          attachments: String(payload.attachments || "")
-            .split("\n")
-            .map((x) => x.trim())
-            .filter(Boolean),
-          useAttachmentPhrase: Boolean(payload.useAttachmentPhrase),
-          tone: String(payload.tone || "default"),
-          docno: String(payload.docno || "").trim(),
-          owner: String(payload.owner || "").trim(),
-          contact: String(payload.contact || "").trim(),
-          related: String(payload.relatedDocs || "")
-            .split("\n")
-            .map((x) => x.trim())
-            .filter(Boolean),
-        }),
-      });
-
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(json.error || `AI 생성 실패: ${response.status}`);
-      }
-      if (!json.document) {
-        throw new Error("AI 응답에서 공문 본문을 받지 못했습니다.");
-      }
-      return json.document;
-    }
-
-    $("docForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!validate()) return toast("필수 항목을 입력하세요");
-
-      const btn = generateBtn;
-      const original = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = "생성 중...";
-
-      try{
-        const payload = readForm();
-        persist();
-
-        const text = await generateDraft(payload);
-        result.value = String(text || "").trim();
-
-        toast("생성 완료");
-        $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch(err){
-        console.error(err);
-        toast(err?.message || "생성 실패");
-      } finally {
-        btn.textContent = original;
-        validate();
-      }
-    });
-
-    $("copyBtn").addEventListener("click", async () => {
-      if (!String(result.value || "").trim()) return toast("복사할 내용이 없습니다.");
-      try{
-        await navigator.clipboard.writeText(result.value || "");
-        toast("복사 완료");
-      } catch {
-        result.select();
-        document.execCommand("copy");
-        toast("선택 후 복사를 실행했습니다.");
-      }
-    });
-
-    $("downloadBtn").addEventListener("click", () => {
-      if (!String(result.value || "").trim()) return toast("다운로드할 내용이 없습니다.");
-      const name = (subject.value.trim() || "공문초안") + ".txt";
-      downloadText(name, result.value || "");
-      toast("다운로드 시작");
-    });
-
-    restore();
-    validate();
-    disableResultDragDrop();
-    wireResultEditorKeys();
-    document.addEventListener("input", () => { validate(); persist(); });
-  </script>
+  <script defer src="/main.js?v=20260214-15"></script>
 </body>
 </html>
-
