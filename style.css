@@ -101,6 +101,7 @@ body {
   padding: 18px;
   box-shadow: 0 12px 28px rgba(17, 43, 68, 0.08);
   animation: fadeUp 0.5s ease-out;
+  min-width: 0; /* allow grid children to shrink without overflow */
 }
 
 h2,
@@ -495,6 +496,35 @@ button.ghost {
   }
   .link-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* In-app browsers and landscape phones often exceed 640px; keep a no-clipping layout up to 920px. */
+  .template-row {
+    grid-template-columns: 1fr;
+  }
+
+  .template-pickers {
+    grid-template-columns: 1fr;
+  }
+
+  .template-row .template-btn {
+    width: 100%;
+  }
+
+  .preview-top {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .preview-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .preview-actions button {
+    width: 100%;
+    min-width: 0;
   }
 }
 
