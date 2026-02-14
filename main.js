@@ -14,7 +14,7 @@ const contactInput = document.getElementById("contact");
 const relatedInput = document.getElementById("related");
 const templateSelect = document.getElementById("template");
 const templateSearchInput = document.getElementById("template-search");
-const templateSearchResults = document.getElementById("template-search-results");
+const templateSearchHint = document.getElementById("template-search-hint");
 const applyTemplateBtn = document.getElementById("apply-template-btn");
 const resetBtn = document.getElementById("reset-btn");
 const result = document.getElementById("result");
@@ -1151,7 +1151,7 @@ setStatus("주제를 입력한 뒤 공문 생성을 누르면 AI가 전체 공�
 wireAutoSave();
 disableResultDragDrop();
 wireTemplateSearch();
-renderTemplateSearchResults(templateSearchInput ? templateSearchInput.value : "");
+updateTemplateSearchHint(templateSearchInput ? templateSearchInput.value : "");
 wireScrollHelpers();
 
 form.addEventListener("submit", async (event) => {
@@ -1421,13 +1421,11 @@ function getFilteredTemplates(query) {
 function wireTemplateSearch() {
   if (!templateSearchInput) return;
 
-  let expanded = false;
-
   const applyFilter = () => {
     const current = String(templateSelect.value || "");
     const query = templateSearchInput.value || "";
     initTemplates(query);
-    renderTemplateSearchResults(query, { expanded });
+    updateTemplateSearchHint(query);
 
     if (current) {
       // Restore selection if still present after filtering.
@@ -1444,146 +1442,17 @@ function wireTemplateSearch() {
   });
 
   templateSearchInput.addEventListener("search", applyFilter);
-
-  templateSearchInput.addEventListener("focus", () => {
-    if (templateSearchInput.value.trim()) {
-      renderTemplateSearchResults(templateSearchInput.value, { expanded });
-      openTemplateSearchResults();
-    }
-  });
-
-  templateSearchInput.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeTemplateSearchResults();
-      templateSearchInput.blur();
-    }
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!templateSearchResults) return;
-    if (templateSearchResults.contains(e.target)) return;
-    if (templateSearchInput.contains(e.target)) return;
-    closeTemplateSearchResults();
-  });
-
-  if (templateSearchResults) {
-    templateSearchResults.addEventListener("click", (e) => {
-    const btn = e.target?.closest?.("button");
-    if (!btn) return;
-
-    const action = btn.getAttribute("data-action");
-    if (action === "close") {
-      closeTemplateSearchResults();
-      return;
-    }
-    if (action === "toggle") {
-      expanded = !expanded;
-      renderTemplateSearchResults(templateSearchInput.value, { expanded });
-      openTemplateSearchResults();
-      return;
-    }
-    });
-  }
 }
 
-function renderTemplateSearchResults(rawQuery, opts = {}) {
-  if (!templateSearchResults) return;
-
+function updateTemplateSearchHint(rawQuery) {
+  if (!templateSearchHint) return;
   const query = normalizeQuery(rawQuery);
   if (!query) {
-    templateSearchResults.innerHTML = "";
-    closeTemplateSearchResults();
+    templateSearchHint.textContent = "";
     return;
   }
-
-  const filtered = getFilteredTemplates(query);
-  const count = filtered.length;
-
-  if (!count) {
-    templateSearchResults.innerHTML = buildTemplateResultsShell({
-      metaText: `검색 결과: 0개`,
-      bodyHtml: `<div class="template-result-empty">검색 결과 없음</div>`,
-      showToggle: false,
-      expanded: false,
-    });
-    openTemplateSearchResults();
-    return;
-  }
-
-  const expanded = Boolean(opts.expanded);
-  const limit = expanded ? 18 : 6;
-  const sorted = filtered.slice().sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
-  const top = sorted.slice(0, limit);
-  const metaText = count > top.length ? `검색 결과: ${count}개 (상위 ${top.length}개 표시)` : `검색 결과: ${count}개`;
-
-  const items = top
-    .map((t) => {
-      const cat = escapeHtml(String(t.category || "기타"));
-      const label = escapeHtml(String(t.label || ""));
-      const subject = escapeHtml(String(t.subject || ""));
-      const id = escapeHtml(String(t.id || ""));
-      return (
-        `<button type="button" class="template-result-item" data-template-id="${id}">` +
-        `<div class="template-result-title"><span class="template-result-category">${cat}</span> ${label}</div>` +
-        `<div class="template-result-subject" title="${subject}">${subject}</div>` +
-        `</button>`
-      );
-    })
-    .join("");
-
-  templateSearchResults.innerHTML = buildTemplateResultsShell({
-    metaText,
-    bodyHtml: `<div class="template-result-list">${items}</div>`,
-    showToggle: count > limit,
-    expanded,
-  });
-  openTemplateSearchResults();
-
-  templateSearchResults.querySelectorAll("button[data-template-id]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = String(btn.getAttribute("data-template-id") || "");
-      if (!id) return;
-
-      templateSelect.value = id;
-      persistFormState();
-      setStatus("템플릿을 선택했습니다. '템플릿 적용'을 누르세요.");
-      closeTemplateSearchResults();
-    });
-  });
-}
-
-function buildTemplateResultsShell({ metaText, bodyHtml, showToggle, expanded }) {
-  const toggleLabel = expanded ? "접기" : "더 보기";
-  const toggleBtn = showToggle ? `<button type="button" class="template-mini-btn" data-action="toggle">${toggleLabel}</button>` : "";
-  return (
-    `<div class="template-result-bar">` +
-    `<div class="template-result-meta">${escapeHtml(metaText)}</div>` +
-    `<div class="template-result-bar-actions">` +
-    `${toggleBtn}` +
-    `<button type="button" class="template-mini-btn" data-action="close">닫기</button>` +
-    `</div>` +
-    `</div>` +
-    `${bodyHtml}`
-  );
-}
-
-function openTemplateSearchResults() {
-  if (!templateSearchResults) return;
-  templateSearchResults.classList.add("is-open");
-}
-
-function closeTemplateSearchResults() {
-  if (!templateSearchResults) return;
-  templateSearchResults.classList.remove("is-open");
-}
-
-function escapeHtml(text) {
-  return String(text || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
-    .replaceAll("'", "&#39;");
+  const count = getFilteredTemplates(query).length;
+  templateSearchHint.textContent = count ? `검색 결과: ${count}개` : "검색 결과 없음";
 }
 
 function buildFilename(payload) {
@@ -1675,6 +1544,7 @@ function restoreFormState() {
     if (templateSearchInput && typeof state.templateSearch === "string") {
       templateSearchInput.value = state.templateSearch;
       initTemplates(state.templateSearch);
+      updateTemplateSearchHint(state.templateSearch);
     }
     const templateId =
       typeof state.templateId === "string"
