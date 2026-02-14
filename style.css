@@ -136,10 +136,8 @@ h3 {
 
 .template-row {
   display: grid;
-  grid-template-columns: 1.1fr 1fr auto auto;
-  grid-template-areas:
-    "search select apply reset"
-    "hint hint hint hint";
+  grid-template-columns: 1fr auto auto;
+  grid-template-rows: auto auto;
   gap: 12px;
   align-items: end;
   padding: 12px;
@@ -150,29 +148,35 @@ h3 {
 }
 
 .template-pickers {
-  display: contents; /* allow children to align to template-row grid */
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
 }
 
 .template-search-wrap {
   position: relative;
-  grid-area: search;
 }
 
 .template-select-wrap {
-  grid-area: select;
 }
 
 .template-apply {
-  grid-area: apply;
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .template-reset {
-  grid-area: reset;
+  grid-column: 3;
+  grid-row: 1;
 }
 
 .template-hint {
-  grid-area: hint;
   grid-column: 1 / -1;
+  grid-row: 2;
   margin: 0;
   font-size: 12px;
   font-weight: 700;
@@ -218,7 +222,6 @@ h3 {
   justify-content: center;
   white-space: normal;
   min-width: 0;
-  margin-top: 22px; /* align with inputs that have labels above */
 }
 
 .field {
@@ -529,16 +532,30 @@ button.ghost {
   /* In-app browsers and landscape phones often exceed 640px; keep a no-clipping layout up to 920px. */
   .template-row {
     grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "search search"
-      "select select"
-      "apply reset"
-      "hint hint";
+    grid-template-rows: auto auto auto;
   }
 
-  .template-row .template-btn {
+  .template-pickers {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    grid-template-columns: 1fr;
+  }
+
+  .template-apply {
+    grid-column: 1;
+    grid-row: 2;
     width: 100%;
-    margin-top: 0;
+  }
+
+  .template-reset {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .template-hint {
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 
   .preview-top {
