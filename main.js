@@ -12,6 +12,8 @@ const docnoInput = document.getElementById("docno");
 const ownerInput = document.getElementById("owner");
 const contactInput = document.getElementById("contact");
 const relatedInput = document.getElementById("related");
+const templateMajorSelect = document.getElementById("template-major");
+const templateSubSelect = document.getElementById("template-sub");
 const templateSelect = document.getElementById("template");
 const applyTemplateBtn = document.getElementById("apply-template-btn");
 const resetBtn = document.getElementById("reset-btn");
@@ -1216,8 +1218,8 @@ downloadBtn.addEventListener("click", () => {
 applyTemplateBtn.addEventListener("click", () => {
   const id = String(templateSelect.value || "");
   if (!id) {
-    setStatus("적용할 템플릿을 선택하세요.");
-    templateSelect.focus();
+    setStatus("적용할 템플릿을 선택하세요. (대주제 -> 소주제 -> 주제)");
+    (templateMajorSelect || templateSelect).focus();
     return;
   }
 
@@ -1259,6 +1261,20 @@ resetBtn.addEventListener("click", () => {
   clearFormState();
   setStatus("입력값을 초기화했습니다.");
   subjectInput.focus();
+});
+
+templateMajorSelect.addEventListener("change", () => {
+  rebuildSubAndTopic();
+  persistFormState();
+});
+
+templateSubSelect.addEventListener("change", () => {
+  rebuildTopicOptions();
+  persistFormState();
+});
+
+templateSelect.addEventListener("change", () => {
+  persistFormState();
 });
 
 function collectFormData() {
@@ -1349,36 +1365,29 @@ function disableResultDragDrop() {
 }
 
 function initTemplates() {
-  // Keep HTML clean; populate options here.
+  // 3-level picker: major -> sub -> topic (template)
   // Preserve the first "선택 안 함" option and rebuild the rest.
-  while (templateSelect.options.length > 1) {
-    templateSelect.remove(1);
+  while (templateMajorSelect.options.length > 1) {
+    templateMajorSelect.remove(1);
   }
 
-  const groups = new Map();
+  const majors = new Set();
   for (const tpl of TEMPLATES) {
-    const category = String(tpl.category || "기타");
-    if (!groups.has(category)) {
-      groups.set(category, []);
-    }
-    groups.get(category).push(tpl);
+    const { major } = splitCategory(tpl.category);
+    majors.add(major);
   }
 
-  const categories = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "ko"));
-  for (const category of categories) {
-    const list = groups.get(category).slice().sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
-    const optgroup = document.createElement("optgroup");
-    optgroup.label = category;
-
-    for (const tpl of list) {
-      const opt = document.createElement("option");
-      opt.value = tpl.id;
-      opt.textContent = tpl.label;
-      optgroup.appendChild(opt);
-    }
-
-    templateSelect.appendChild(optgroup);
+  const majorList = Array.from(majors).sort((a, b) => a.localeCompare(b, "ko"));
+  for (const major of majorList) {
+    const opt = document.createElement("option");
+    opt.value = major;
+    opt.textContent = major;
+    templateMajorSelect.appendChild(opt);
   }
+
+  templateSubSelect.disabled = true;
+  templateSelect.disabled = true;
+  rebuildSubAndTopic();
 }
 
 function buildFilename(payload) {
@@ -1403,6 +1412,8 @@ function wireAutoSave() {
     ownerInput,
     contactInput,
     relatedInput,
+    templateMajorSelect,
+    templateSubSelect,
     templateSelect,
     result,
   ];
@@ -1435,6 +1446,8 @@ function persistFormState() {
     owner: ownerInput.value,
     contact: contactInput.value,
     related: relatedInput.value,
+    templateMajor: templateMajorSelect.value,
+    templateSub: templateSubSelect.value,
     template: templateSelect.value,
     result: result.value,
   };
@@ -1466,6 +1479,10 @@ function restoreFormState() {
     if (typeof state.owner === "string") ownerInput.value = state.owner;
     if (typeof state.contact === "string") contactInput.value = state.contact;
     if (typeof state.related === "string") relatedInput.value = state.related;
+    if (typeof state.templateMajor === "string") templateMajorSelect.value = state.templateMajor;
+    rebuildSubAndTopic();
+    if (typeof state.templateSub === "string") templateSubSelect.value = state.templateSub;
+    rebuildTopicOptions();
     if (typeof state.template === "string") templateSelect.value = state.template;
     if (typeof state.result === "string") result.value = state.result;
   } catch {
@@ -1479,4 +1496,84 @@ function clearFormState() {
   } catch {
     // Ignore.
   }
+}
+
+function splitCategory(category) {
+  const raw = String(category || "").trim();
+  if (!raw) {
+    return { major: "기타", sub: "기타" };
+  }
+
+  const parts = raw.split("/").map((x) => x.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    return { major: parts[0], sub: parts.slice(1).join("/") };
+  }
+
+  return { major: raw, sub: "기타" };
+}
+
+function rebuildSubAndTopic() {
+  const major = String(templateMajorSelect.value || "");
+
+  // Reset sub/topic options (keep first option)
+  while (templateSubSelect.options.length > 1) templateSubSelect.remove(1);
+  while (templateSelect.options.length > 1) templateSelect.remove(1);
+
+  if (!major) {
+    templateSubSelect.disabled = true;
+    templateSelect.disabled = true;
+    templateSubSelect.value = "";
+    templateSelect.value = "";
+    return;
+  }
+
+  const subs = new Set();
+  for (const tpl of TEMPLATES) {
+    const c = splitCategory(tpl.category);
+    if (c.major === major) subs.add(c.sub);
+  }
+
+  const subList = Array.from(subs).sort((a, b) => a.localeCompare(b, "ko"));
+  for (const sub of subList) {
+    const opt = document.createElement("option");
+    opt.value = sub;
+    opt.textContent = sub;
+    templateSubSelect.appendChild(opt);
+  }
+
+  templateSubSelect.disabled = false;
+  templateSubSelect.value = "";
+  templateSelect.disabled = true;
+  templateSelect.value = "";
+}
+
+function rebuildTopicOptions() {
+  const major = String(templateMajorSelect.value || "");
+  const sub = String(templateSubSelect.value || "");
+
+  while (templateSelect.options.length > 1) templateSelect.remove(1);
+
+  if (!major || !sub) {
+    templateSelect.disabled = true;
+    templateSelect.value = "";
+    return;
+  }
+
+  const items = TEMPLATES
+    .filter((tpl) => {
+      const c = splitCategory(tpl.category);
+      return c.major === major && c.sub === sub;
+    })
+    .slice()
+    .sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
+
+  for (const tpl of items) {
+    const opt = document.createElement("option");
+    opt.value = tpl.id;
+    opt.textContent = tpl.label;
+    templateSelect.appendChild(opt);
+  }
+
+  templateSelect.disabled = false;
+  templateSelect.value = "";
 }

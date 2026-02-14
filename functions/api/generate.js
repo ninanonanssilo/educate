@@ -280,46 +280,55 @@ function normalizeRelatedSection(documentText, related) {
     return String(documentText || "");
   }
 
-  // Remove an existing related block (if any) right after the title line.
-  const titleIdx = lines.findIndex((l) => String(l || "").trim().startsWith("제목"));
+  // Find the "제목" header line (some outputs include extra spaces).
+  const titleIdx = lines.findIndex((l) => /^\s*제\s*목\b/.test(String(l || "")));
   if (titleIdx < 0) {
     return String(documentText || "");
   }
 
-  // Identify and remove "관련" lines between title and the first body item / attachments / blank gap.
-  const out = [];
-  for (let i = 0; i < lines.length; i += 1) {
-    if (i <= titleIdx) {
-      out.push(lines[i]);
-      continue;
-    }
+  // Remove any existing related block right below the title line.
+  const out = lines.slice(0, titleIdx + 1);
+  let i = titleIdx + 1;
+  let removingRelated = false;
 
-    // Stop filtering when the body starts.
+  for (; i < lines.length; i += 1) {
     const trimmed = String(lines[i] || "").trim();
-    const isBodyStart = /^\d+\.\s/.test(trimmed) || trimmed.startsWith("붙임") || trimmed.startsWith("끝.");
-    if (isBodyStart) {
-      out.push(...lines.slice(i));
+
+    // Stop at the first blank line after the title (header/body separator).
+    if (trimmed === "") {
       break;
     }
 
-    // Drop related lines only in the header region.
+    // Stop when the body/attachment starts.
+    const isBodyStart = /^\d+\.\s/.test(trimmed) || trimmed.startsWith("붙임") || trimmed.startsWith("끝.");
+    if (isBodyStart && !removingRelated) {
+      break;
+    }
+
+    // Detect the start of a related block.
     if (trimmed.startsWith("관련")) {
+      removingRelated = true;
       continue;
     }
 
+    // Remove continuation lines of related block: indented numbered items.
+    if (removingRelated && /^\d+\.\s/.test(trimmed)) {
+      continue;
+    }
+
+    // If we were removing related but hit another header line, stop removing.
+    removingRelated = false;
     out.push(lines[i]);
   }
 
   if (!cleaned.length) {
+    out.push(...lines.slice(i));
     return out.join("\n");
   }
 
-  // Insert related immediately under the title line (before the blank line).
-  const insertAt = out.findIndex((_, idx) => idx > titleIdx && String(out[idx] || "").trim() === "");
-  const at = insertAt >= 0 ? insertAt : titleIdx + 1;
-  const relatedLines = buildRelatedLines(cleaned);
-  out.splice(at, 0, ...relatedLines);
-
+  // Insert related immediately under the title line ("공문 주제" 밑).
+  out.push(...buildRelatedLines(cleaned));
+  out.push(...lines.slice(i));
   return out.join("\n");
 }
 
