@@ -22,6 +22,7 @@
   --brand: #1f6fb8;
   --brand-dark: #175790;
   --accent: #19916a;
+  --panel-gap: 26px;
 }
 
 * {
@@ -90,7 +91,7 @@ body {
   display: grid;
   /* Keep the left form readable, give the result panel the remaining width. */
   grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--panel-gap);
 }
 
 .card {
@@ -490,6 +491,7 @@ button.ghost {
 @media (max-width: 920px) {
   .page {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   .link-grid {
     grid-template-columns: 1fr;
