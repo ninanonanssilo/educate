@@ -15,7 +15,7 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="학교 공문 자동 작성 도우미" />
   <meta name="twitter:description" content="학교 공문 초안을 빠르게 생성하고 복사할 수 있는 자동 작성 도우미입니다." />
-  <link href="/style.css?v=20260214-5" rel="stylesheet" />
+  <link href="/style.css?v=20260214-6" rel="stylesheet" />
 </head>
 <body>
   <header class="hero">
@@ -42,15 +42,15 @@
                 <input id="template-search" type="search" placeholder="예: 생활기록부, 연수, 졸업식" autocomplete="off" />
               </label>
             </div>
-            <label class="template-label">
+            <label class="template-label template-select-wrap">
               빠른 템플릿
               <select id="template" name="template">
                 <option value="">선택 안 함</option>
               </select>
             </label>
           </div>
-          <button type="button" id="apply-template-btn" class="template-btn">템플릿 적용</button>
-          <button type="button" id="reset-btn" class="template-btn" aria-label="입력 초기화">
+          <button type="button" id="apply-template-btn" class="template-btn template-apply">템플릿 적용</button>
+          <button type="button" id="reset-btn" class="template-btn template-reset" aria-label="입력 초기화">
             <span class="btn-stack">
               <span>입력</span>
               <span>초기화</span>
@@ -178,6 +178,6 @@
     <p>Copyright © HONGSEOK LEE. All rights reserved.</p>
   </footer>
 
-  <script defer src="/main.js?v=20260214-5"></script>
+  <script defer src="/main.js?v=20260214-6"></script>
 </body>
 </html>

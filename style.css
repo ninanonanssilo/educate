@@ -125,39 +125,63 @@ h3 {
   color: #27465e;
   font-size: 13px;
   line-height: 1.5;
+  /* Avoid mobile clipping for long tokens like "학생/학부모/교직원" inside parentheses. */
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.writer {
+  min-width: 0;
 }
 
 .template-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  grid-template-rows: auto auto;
-  gap: 10px;
-  align-items: center;
+  grid-template-columns: 1.1fr 1fr auto auto;
+  grid-template-areas:
+    "search select apply reset"
+    "hint hint hint hint";
+  gap: 12px;
+  align-items: end;
   padding: 12px;
   border: 1px dashed rgba(25, 145, 106, 0.35);
   border-radius: 14px;
   background: rgba(25, 145, 106, 0.05);
+  min-width: 0;
 }
 
 .template-pickers {
-  display: grid;
-  grid-template-columns: 0.95fr 1.05fr;
-  gap: 10px;
-  align-items: end;
-  min-width: 0;
+  display: contents; /* allow children to align to template-row grid */
 }
 
 .template-search-wrap {
   position: relative;
+  grid-area: search;
+}
+
+.template-select-wrap {
+  grid-area: select;
+}
+
+.template-apply {
+  grid-area: apply;
+}
+
+.template-reset {
+  grid-area: reset;
 }
 
 .template-hint {
+  grid-area: hint;
   grid-column: 1 / -1;
   margin: 0;
   font-size: 12px;
   font-weight: 700;
   color: var(--muted);
   min-height: 16px;
+}
+
+.template-hint:empty {
+  display: none;
 }
 
 .template-label {
@@ -193,6 +217,8 @@ h3 {
   align-items: center;
   justify-content: center;
   white-space: normal;
+  min-width: 0;
+  margin-top: 22px; /* align with inputs that have labels above */
 }
 
 .field {
@@ -502,15 +528,17 @@ button.ghost {
 
   /* In-app browsers and landscape phones often exceed 640px; keep a no-clipping layout up to 920px. */
   .template-row {
-    grid-template-columns: 1fr;
-  }
-
-  .template-pickers {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "search search"
+      "select select"
+      "apply reset"
+      "hint hint";
   }
 
   .template-row .template-btn {
     width: 100%;
+    margin-top: 0;
   }
 
   .preview-top {
@@ -555,6 +583,7 @@ button.ghost {
   }
   .template-row {
     padding: 10px;
+    gap: 10px;
   }
   .template-row input[type="search"],
   .template-row select,
@@ -571,12 +600,6 @@ button.ghost {
     font-size: 16px; /* prevent iOS zoom on focus */
   }
   .grid-2 {
-    grid-template-columns: 1fr;
-  }
-  .template-row {
-    grid-template-columns: 1fr;
-  }
-  .template-pickers {
     grid-template-columns: 1fr;
   }
   .template-row .template-btn {
