@@ -124,7 +124,7 @@ h3 {
 
 .template-row {
   display: grid;
-  grid-template-columns: 1.55fr 0.85fr;
+  grid-template-columns: 1fr auto auto;
   grid-template-rows: auto auto;
   gap: 10px;
   align-items: center;
@@ -161,14 +161,6 @@ h3 {
   font-size: 14px;
 }
 
-.template-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  align-items: end;
-  align-self: end;
-}
-
 .btn-stack {
   display: inline-flex;
   flex-direction: column;
@@ -177,20 +169,17 @@ h3 {
   text-align: center;
 }
 
-.template-actions button {
-  white-space: nowrap;
-}
-
 .template-row input[type="search"],
 .template-row select,
-.template-actions button {
+.template-row .template-btn {
   height: 44px;
 }
 
-.template-actions button {
+.template-row .template-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: normal;
 }
 
 .field {
@@ -521,6 +510,17 @@ button.ghost {
   .card {
     padding: 14px;
   }
+  .template-row {
+    padding: 10px;
+  }
+  .template-row input[type="search"],
+  .template-row select,
+  .template-row .template-btn {
+    height: 40px;
+  }
+  .template-row .template-btn {
+    padding: 9px 10px;
+  }
   input,
   textarea,
   select,
@@ -536,9 +536,8 @@ button.ghost {
   .template-pickers {
     grid-template-columns: 1fr;
   }
-  .template-actions {
-    justify-content: flex-start;
-    flex-wrap: wrap;
+  .template-row .template-btn {
+    width: 100%;
   }
   /* Mobile: prevent right-side clipping by stacking title and actions. */
   .preview-top {

@@ -1357,7 +1357,7 @@ function disableResultDragDrop() {
 }
 
 function initTemplates() {
-  // Single picker grouped by category (optgroup).
+  // Single picker (no optgroup): optgroup headers were not clickable and felt noisy on mobile.
   // Preserve the first "선택 안 함" option and rebuild the rest.
   while (templateSelect.options.length > 1) {
     templateSelect.remove(1);
@@ -1366,29 +1366,20 @@ function initTemplates() {
   const query = normalizeQuery(arguments[0] || "");
   const filtered = getFilteredTemplates(query);
 
-  const groups = new Map();
-  for (const tpl of filtered) {
+  const sorted = filtered
+    .slice()
+    .sort((a, b) => {
+      const ac = String(a.category || "").localeCompare(String(b.category || ""), "ko");
+      if (ac !== 0) return ac;
+      return String(a.label || "").localeCompare(String(b.label || ""), "ko");
+    });
+
+  for (const tpl of sorted) {
     const category = String(tpl.category || "기타");
-    if (!groups.has(category)) {
-      groups.set(category, []);
-    }
-    groups.get(category).push(tpl);
-  }
-
-  const categories = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "ko"));
-  for (const category of categories) {
-    const list = groups.get(category).slice().sort((a, b) => String(a.label).localeCompare(String(b.label), "ko"));
-    const optgroup = document.createElement("optgroup");
-    optgroup.label = category;
-
-    for (const tpl of list) {
-      const opt = document.createElement("option");
-      opt.value = tpl.id;
-      opt.textContent = tpl.label;
-      optgroup.appendChild(opt);
-    }
-
-    templateSelect.appendChild(optgroup);
+    const opt = document.createElement("option");
+    opt.value = tpl.id;
+    opt.textContent = `${category} · ${tpl.label}`;
+    templateSelect.appendChild(opt);
   }
 }
 
