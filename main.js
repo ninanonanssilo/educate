@@ -1152,6 +1152,7 @@ disableResultDragDrop();
 wireResultEditorKeys();
 wireTemplateSearch();
 updateTemplateSearchHint(templateSearchInput ? templateSearchInput.value : "");
+wireOverflowDebug();
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -1459,6 +1460,56 @@ function wireResultEditorKeys() {
       result.dispatchEvent(new Event("input", { bubbles: true }));
     }
   });
+}
+
+function wireOverflowDebug() {
+  // Run only when explicitly requested, e.g.:
+  // https://educate1.pages.dev/?debug=1
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("debug") !== "1") {
+    return;
+  }
+
+  const run = () => {
+    const docW = document.documentElement.clientWidth;
+    // eslint-disable-next-line no-console
+    console.log("clientWidth:", docW, "scrollWidth:", document.documentElement.scrollWidth);
+
+    const offenders = [];
+    document.querySelectorAll("body *").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      const overflowed = r.left < -1 || r.right > docW + 1;
+
+      const style = getComputedStyle(el);
+      const maybeBad = overflowed || (el.scrollWidth > el.clientWidth + 2 && style.overflowX === "visible");
+
+      if (!maybeBad) return;
+
+      offenders.push({
+        tag: el.tagName,
+        id: el.id,
+        class: el.className,
+        left: Math.round(r.left),
+        right: Math.round(r.right),
+        width: Math.round(r.width),
+        scrollW: el.scrollWidth,
+        clientW: el.clientWidth,
+        overflowX: style.overflowX,
+        whiteSpace: style.whiteSpace,
+      });
+
+      // Visual marker on the actual problematic elements.
+      el.style.outline = "2px solid red";
+    });
+
+    offenders.sort((a, b) => (b.right - docW) - (a.right - docW));
+    // eslint-disable-next-line no-console
+    console.table(offenders.slice(0, 20));
+  };
+
+  // Wait a tick to ensure layout is settled (fonts, etc).
+  window.setTimeout(run, 250);
+  window.addEventListener("resize", () => window.setTimeout(run, 100));
 }
 
 function initTemplates() {
