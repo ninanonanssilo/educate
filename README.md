@@ -34,7 +34,7 @@ npm run deploy:prod
 Cloudflare Pages 프로젝트 설정에서 아래 변수를 추가해야 AI 생성이 동작합니다.
 
 - `OPENAI_API_KEY`: OpenAI API 키 (필수)
-- `OPENAI_MODEL`(선택): 기본값 `gpt-4o-mini`
+- `OPENAI_MODEL`(선택): 기본값 `gpt-5.2`
 
 설정 경로:
 - Cloudflare Dashboard > `Workers & Pages` > 프로젝트 > `Settings` > `Variables and Secrets`

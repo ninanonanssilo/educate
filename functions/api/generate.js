@@ -4,7 +4,8 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
     const apiKey = env.OPENAI_API_KEY;
-    const model = env.OPENAI_MODEL || "gpt-4o-mini";
+    // Cloudflare 변수에 `"gpt-5.2"`처럼 따옴표를 포함해 넣는 경우가 있어 정리한다.
+    const model = sanitizeModel(env.OPENAI_MODEL) || "gpt-5.2";
 
     if (!apiKey) {
       return json(
@@ -70,6 +71,24 @@ export async function onRequestPost(context) {
   } catch (error) {
     return json({ error: "Internal error while generating document." }, 500);
   }
+}
+
+function sanitizeModel(raw) {
+  if (typeof raw !== "string") {
+    return "";
+  }
+
+  let value = raw.trim();
+  // Strip wrapping quotes repeatedly: `"gpt-5.2"` or `'gpt-5.2'`
+  while (
+    value.length >= 2 &&
+    ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'")))
+  ) {
+    value = value.slice(1, -1).trim();
+  }
+
+  return value;
 }
 
 function buildPrompt({ subject, recipient, sender, date, details, attachments }) {
