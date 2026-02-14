@@ -22,7 +22,8 @@
   --brand: #1f6fb8;
   --brand-dark: #175790;
   --accent: #19916a;
-  --panel-gap: 26px;
+  /* Must exceed card shadow blur to avoid "overlap" perception between panels. */
+  --panel-gap: 44px;
 }
 
 * {
@@ -99,7 +100,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 18px;
-  box-shadow: 0 12px 28px rgba(17, 43, 68, 0.08);
+  box-shadow: 0 10px 22px rgba(17, 43, 68, 0.08);
   animation: fadeUp 0.5s ease-out;
   min-width: 0; /* allow grid children to shrink without overflow */
 }
