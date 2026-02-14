@@ -11,6 +11,7 @@ const toneSelect = document.getElementById("tone");
 const docnoInput = document.getElementById("docno");
 const ownerInput = document.getElementById("owner");
 const contactInput = document.getElementById("contact");
+const relatedInput = document.getElementById("related");
 const templateSelect = document.getElementById("template");
 const applyTemplateBtn = document.getElementById("apply-template-btn");
 const resetBtn = document.getElementById("reset-btn");
@@ -1249,6 +1250,7 @@ resetBtn.addEventListener("click", () => {
   docnoInput.value = "";
   ownerInput.value = "";
   contactInput.value = "";
+  relatedInput.value = "";
   templateSelect.value = "";
   result.value = "";
   setDefaultDate();
@@ -1275,6 +1277,10 @@ function collectFormData() {
     docno: docnoInput.value.trim(),
     owner: ownerInput.value.trim(),
     contact: contactInput.value.trim(),
+    related: relatedInput.value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean),
   };
 }
 
@@ -1388,6 +1394,7 @@ function wireAutoSave() {
     docnoInput,
     ownerInput,
     contactInput,
+    relatedInput,
     templateSelect,
     result,
   ];
@@ -1419,6 +1426,7 @@ function persistFormState() {
     docno: docnoInput.value,
     owner: ownerInput.value,
     contact: contactInput.value,
+    related: relatedInput.value,
     template: templateSelect.value,
     result: result.value,
   };
@@ -1449,6 +1457,7 @@ function restoreFormState() {
     if (typeof state.docno === "string") docnoInput.value = state.docno;
     if (typeof state.owner === "string") ownerInput.value = state.owner;
     if (typeof state.contact === "string") contactInput.value = state.contact;
+    if (typeof state.related === "string") relatedInput.value = state.related;
     if (typeof state.template === "string") templateSelect.value = state.template;
     if (typeof state.result === "string") result.value = state.result;
   } catch {

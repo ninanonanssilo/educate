@@ -27,6 +27,7 @@ export async function onRequestPost(context) {
     const docno = String(body.docno || "").trim();
     const owner = String(body.owner || "").trim();
     const contact = String(body.contact || "").trim();
+    const related = Array.isArray(body.related) ? body.related : [];
 
     if (!subject) {
       return json({ error: "subject is required." }, 400);
@@ -45,6 +46,7 @@ export async function onRequestPost(context) {
       docno,
       owner,
       contact,
+      related,
     });
 
     const response = await fetch(OPENAI_URL, {
@@ -125,10 +127,12 @@ function pickEulReul(text) {
   return /[bcdfghjklmnpqrstvwxz]$/i.test(value) ? "을" : "를";
 }
 
-function buildPrompt({ subject, recipient, via, sender, date, details, attachments, useAttachmentPhrase, tone, docno, owner, contact }) {
+function buildPrompt({ subject, recipient, via, sender, date, details, attachments, useAttachmentPhrase, tone, docno, owner, contact, related }) {
   const attachmentInput = attachments.length
     ? attachments.map((item, index) => `${index + 1}. ${item}`).join("\n")
     : "(없음)";
+  const relatedList = Array.isArray(related) ? related.map((x) => String(x || "").trim()).filter(Boolean) : [];
+  const relatedInput = relatedList.length ? relatedList.map((x) => `- ${x}`).join("\n") : "(없음)";
 
   const isDetailsEmpty = !String(details || "").trim();
   const subjectBasedDetails = buildSubjectBasedDetails(subject, attachments);
@@ -164,6 +168,7 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     `- 수신: ${recipient}`,
     `- 경유: ${via || "미기재"}`,
     `- 제목: ${subject}`,
+    `- 관련: ${relatedInput}`,
     `- 시행일: ${date || "오늘 날짜 형식 유지"}`,
     `- 발신: ${sender}`,
     `- 문서번호: ${docno || "미기재"}`,
@@ -183,6 +188,14 @@ function buildPrompt({ subject, recipient, via, sender, date, details, attachmen
     "  가. ...",
     "  나. ...",
     "  다. ...",
+    "",
+    "관련 표기 규칙:",
+    "- 관련이 0개면 '관련' 줄을 쓰지 말 것.",
+    "- 관련이 있으면 제목 아래에 다음 형식으로만 표기:",
+    "  관련  <내용>",
+    "  관련  1. <내용>",
+    "        2. <내용>",
+    "- 관련 내용은 입력값을 그대로 사용하고 임의로 생성/추가하지 말 것.",
     "",
     "붙임 표기 규칙:",
     "- 붙임이 0개면 '붙임' 줄을 쓰지 말 것(붙임 구역 전체 생략).",

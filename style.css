@@ -161,6 +161,10 @@ h3 {
   gap: 10px;
 }
 
+.advanced-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
 .form {
   display: grid;
   gap: 12px;
