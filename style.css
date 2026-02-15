@@ -878,6 +878,32 @@ button.ghost {
   font-weight: 700;
 }
 
+/* Collapsible usage guide */
+details.help{
+  border: 1px solid rgba(215,230,226,0.9);
+  background: rgba(255,255,255,.75);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin: 12px 0 14px;
+}
+details.help summary{
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+details.help summary::-webkit-details-marker{display:none;}
+details.help summary::after{
+  content:"▾";
+  color: var(--muted);
+  font-weight: 900;
+  transition: transform 140ms ease;
+}
+details.help[open] summary::after{ transform: rotate(180deg); }
+.helpSteps{ margin-top: 10px; display: grid; gap: 6px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+
 .link-card a:hover {
   background: var(--brand-dark);
 }
