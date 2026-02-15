@@ -15,32 +15,42 @@
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="학교 공문 자동 작성 도우미" />
   <meta name="twitter:description" content="학교 공문 초안을 빠르게 생성하고 복사할 수 있는 자동 작성 도우미입니다." />
-  <link href="/style.css?v=20260214-20" rel="stylesheet" />
+  <link href="/style.css?v=20260215-01" rel="stylesheet" />
 </head>
 <body>
   <aside id="sidebar" class="sidebar" aria-label="카테고리">
     <div class="side-head">
-      <div class="side-brand" aria-label="서비스">
+      <a class="side-brand" href="https://studio.firebase.google.com/edu-tools-22506845" aria-label="Edu Tools로 돌아가기">
         <div class="side-mark" aria-hidden="true"></div>
         <div class="side-brand-text">
           <div class="side-app">Edu Tools</div>
           <div class="side-sub">업무 자동화 도우미</div>
         </div>
-      </div>
+      </a>
       <button id="navClose" class="icon-btn" type="button" aria-label="닫기">
         <span aria-hidden="true">×</span>
       </button>
     </div>
     <nav class="side-nav" aria-label="카테고리 목록">
       <div class="side-section">생성기</div>
-      <a class="side-link is-active" href="/" aria-current="page">
-        <span class="side-ico" aria-hidden="true">D</span>
-        <span class="side-label">학교 공문 자동 작성</span>
-      </a>
-      <a class="side-link" href="https://money-report.pages.dev/" target="_blank" rel="noreferrer">
-        <span class="side-ico" aria-hidden="true">P</span>
-        <span class="side-label">품의 기안 생성기</span>
+      <a class="side-link" href="https://class-assignment.pages.dev/?embedded=0" target="_blank" rel="noreferrer">
+        <span class="side-ico" aria-hidden="true">C</span>
+        <span class="side-label">반편성 생성기</span>
         <span class="side-ext" aria-hidden="true">↗</span>
+      </a>
+      <a class="side-link" href="https://school-letter.pages.dev/?embedded=0" target="_blank" rel="noreferrer">
+        <span class="side-ico" aria-hidden="true">H</span>
+        <span class="side-label">가정통신문</span>
+        <span class="side-ext" aria-hidden="true">↗</span>
+      </a>
+      <a class="side-link" href="https://money-report.pages.dev/?embedded=0" target="_blank" rel="noreferrer">
+        <span class="side-ico" aria-hidden="true">P</span>
+        <span class="side-label">품의생성기</span>
+        <span class="side-ext" aria-hidden="true">↗</span>
+      </a>
+      <a class="side-link is-active" href="https://educate1.pages.dev/?embedded=0" aria-current="page">
+        <span class="side-ico" aria-hidden="true">D</span>
+        <span class="side-label">공문생성기</span>
       </a>
       <div class="side-divider" role="separator" aria-hidden="true"></div>
       <div class="side-section">연동</div>
@@ -52,15 +62,19 @@
   </aside>
   <div id="scrim" class="scrim" aria-hidden="true"></div>
 
-  <header class="hero topbar">
-    <button id="navToggle" class="nav-toggle" type="button" aria-label="카테고리 열기" aria-expanded="false">
-      <span class="bar"></span>
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </button>
-    <div class="titleBox">
-      <h1>학교 공문 자동 작성 도우미</h1>
-      <p class="hero-desc">AI와 함께하는 학교 업무 효율화</p>
+  <header class="top">
+    <div class="top-inner">
+      <button id="navToggle" class="nav-toggle" type="button" aria-label="카테고리 열기" aria-expanded="false">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <div class="hero" aria-label="도구 소개">
+        <div class="hero-top">
+          <h1 class="title">공문생성기</h1>
+        </div>
+        <div class="subtitle">주제와 핵심 내용을 입력하면 결재용 공문 초안이 바로 생성됩니다.</div>
+      </div>
     </div>
   </header>
 
