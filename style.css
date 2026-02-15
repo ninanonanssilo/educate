@@ -80,6 +80,9 @@ body {
 
 .hero {
   margin-top: 0;
+  flex: 1 1 auto; /* fill the header row so the hero edges align with the main cards */
+  min-width: 0; /* avoid overflow in flex containers */
+  width: 100%;
   padding: 18px 18px 16px;
   border-radius: 18px;
   background: #ffffff;
