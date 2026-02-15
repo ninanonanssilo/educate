@@ -116,10 +116,10 @@ body {
   padding-top: 26px;
   padding-left: max(clamp(14px, 4vw, 28px), env(safe-area-inset-left));
   padding-right: max(clamp(14px, 4vw, 28px), env(safe-area-inset-right));
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--panel-gap);
+  position: relative;
+  display: flex;
   align-items: flex-start;
+  gap: 12px;
 }
 
 .hero-top {
@@ -129,15 +129,6 @@ body {
   gap: 12px;
 }
 
-#navToggle {
-  grid-column: 2;
-  justify-self: start;
-  align-self: start;
-}
-
-.hero {
-  grid-column: 1;
-}
 
 .title {
   margin: 6px 0 0;
@@ -960,6 +951,14 @@ button.ghost {
 }
 
 @media (min-width: 981px) {
+  /* Desktop: keep the hero spanning full width (writer -> preview),
+     and park the hamburger button in the "blank" gutter left of the hero. */
+  #navToggle {
+    position: absolute;
+    top: 26px; /* match .top-inner padding-top so it aligns with the hero top edge */
+    left: -56px; /* 44px button + 12px gap */
+  }
+
   /* Keep the result visible while adjusting inputs on desktop. */
   .preview {
     position: sticky;
