@@ -1193,10 +1193,12 @@ copyBtn.addEventListener("click", async () => {
 
   try {
     await navigator.clipboard.writeText(result.value);
+    toast("클립보드에 복사했습니다.");
     setStatus("공문 초안을 클립보드에 복사했습니다.");
   } catch (error) {
     result.select();
     document.execCommand("copy");
+    toast("복사 권한이 없어 선택 복사로 처리했습니다.", { ms: 2200 });
     setStatus("복사 API 권한이 없어 선택 후 복사를 실행했습니다.");
   }
 });
@@ -1220,6 +1222,7 @@ downloadBtn.addEventListener("click", () => {
   a.remove();
   URL.revokeObjectURL(url);
 
+  toast("TXT를 다운로드했습니다.");
   setStatus("TXT 파일을 다운로드했습니다.");
 });
 
@@ -1350,6 +1353,19 @@ function formatDate(rawDate) {
 
   const [year, month, day] = rawDate.split("-");
   return `${year}. ${Number(month)}. ${Number(day)}.`;
+}
+
+function toast(message, { ms = 1800 } = {}) {
+  const el = document.getElementById("toast");
+  if (!el) return;
+  const m = String(message || "").trim();
+  if (!m) return;
+  el.textContent = m;
+  el.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => {
+    el.classList.remove("show");
+  }, Math.max(700, Number(ms) || 1800));
 }
 
 function setStatus(message) {
