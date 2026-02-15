@@ -116,9 +116,10 @@ body {
   padding-top: 26px;
   padding-left: max(clamp(14px, 4vw, 28px), env(safe-area-inset-left));
   padding-right: max(clamp(14px, 4vw, 28px), env(safe-area-inset-right));
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--panel-gap);
   align-items: flex-start;
-  gap: 12px;
 }
 
 .hero-top {
@@ -126,6 +127,16 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+#navToggle {
+  grid-column: 2;
+  justify-self: start;
+  align-self: start;
+}
+
+.hero {
+  grid-column: 1;
 }
 
 .title {
