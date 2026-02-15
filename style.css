@@ -713,6 +713,25 @@ button.ghost {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+
+  /* Keep copy/download visible while reading long results (mobile + desktop). */
+  position: sticky;
+  top: 10px;
+  z-index: 2;
+  padding: 10px 10px;
+  margin: -10px -10px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(215, 230, 226, 0.9);
+  box-shadow: 0 10px 24px rgba(17, 43, 68, 0.06);
+}
+
+.preview-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .preview-top h2 {
