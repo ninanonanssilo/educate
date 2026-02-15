@@ -106,6 +106,13 @@ body {
 
 .top {
   width: 100%;
+  overflow-x: hidden; /* prevent absolute-positioned nav button from creating horizontal scroll */
+}
+
+@supports (overflow: clip) {
+  .top {
+    overflow-x: clip;
+  }
 }
 
 .top-inner {
@@ -117,9 +124,6 @@ body {
   padding-left: max(clamp(14px, 4vw, 28px), env(safe-area-inset-left));
   padding-right: max(clamp(14px, 4vw, 28px), env(safe-area-inset-right));
   position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
 }
 
 .hero-top {
@@ -951,8 +955,7 @@ button.ghost {
 }
 
 @media (min-width: 981px) {
-  /* Desktop: keep the hero spanning full width (writer -> preview),
-     and park the hamburger button in the "blank" gutter left of the hero. */
+  /* Desktop: hero spans the full header width; nav button sits just left of the hero without overlapping. */
   #navToggle {
     position: absolute;
     top: 26px; /* match .top-inner padding-top so it aligns with the hero top edge */
