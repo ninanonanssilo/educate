@@ -780,6 +780,11 @@ button.ghost {
 
 .official-links {
   margin-top: 16px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.official-inner {
   background: #ffffff;
   border: 1px solid var(--line);
   border-radius: 16px;
