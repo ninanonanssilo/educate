@@ -683,6 +683,46 @@ function normalizeBodyIndentation(documentText) {
       continue;
     }
 
+    // 3rd-level: "1) ..." with 4 leading spaces.
+    const subNum = trimmed.match(/^(\d+)\)\s+/);
+    if (subNum) {
+      raw = `    ${subNum[1]}) ${trimmed.replace(/^(\d+)\)\s+/, "")}`;
+      out.push(raw);
+      prevPrefixLen = `    ${subNum[1]}) `.length;
+      prevWasMarker = true;
+      continue;
+    }
+
+    // 4th-level: "가) ..." with 6 leading spaces.
+    const subKorParen = trimmed.match(/^([가-하])\)\s+/);
+    if (subKorParen) {
+      raw = `      ${subKorParen[1]}) ${trimmed.replace(/^([가-하])\)\s+/, "")}`;
+      out.push(raw);
+      prevPrefixLen = `      ${subKorParen[1]}) `.length;
+      prevWasMarker = true;
+      continue;
+    }
+
+    // 5th-level: "(1) ..." with 8 leading spaces.
+    const subParNum = trimmed.match(/^\((\d+)\)\s+/);
+    if (subParNum) {
+      raw = `        (${subParNum[1]}) ${trimmed.replace(/^\((\d+)\)\s+/, "")}`;
+      out.push(raw);
+      prevPrefixLen = `        (${subParNum[1]}) `.length;
+      prevWasMarker = true;
+      continue;
+    }
+
+    // 6th-level: "(가) ..." with 10 leading spaces.
+    const subParKor = trimmed.match(/^\(([가-하])\)\s+/);
+    if (subParKor) {
+      raw = `          (${subParKor[1]}) ${trimmed.replace(/^\(([가-하])\)\s+/, "")}`;
+      out.push(raw);
+      prevPrefixLen = `          (${subParKor[1]}) `.length;
+      prevWasMarker = true;
+      continue;
+    }
+
     // Continuation line: if previous line started with a marker, align text to marker content.
     // Keep this conservative: only indent when the line isn't already indented.
     if (prevWasMarker && prevPrefixLen > 0 && raw.match(/^\S/)) {
