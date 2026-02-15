@@ -1,3 +1,26 @@
+// Theme (light/dark) - stored per site
+(function initTheme(){
+  const KEY = "eduTools:theme";
+  const saved = localStorage.getItem(KEY);
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = (saved === 'light' || saved === 'dark') ? saved : (prefersDark ? 'dark' : 'light');
+  document.documentElement.dataset.theme = theme;
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  const setLabel = ()=>{
+    const t = document.documentElement.dataset.theme || 'light';
+    btn.setAttribute('aria-label', t === 'dark' ? '밝은 모드로 전환' : '어두운 모드로 전환');
+  };
+  setLabel();
+  btn.addEventListener('click', ()=>{
+    const cur = document.documentElement.dataset.theme || 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem(KEY, next);
+    setLabel();
+  });
+})();
+
 const form = document.getElementById("doc-form");
 const subjectInput = document.getElementById("subject");
 const recipientInput = document.getElementById("recipient");
