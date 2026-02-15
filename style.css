@@ -27,18 +27,7 @@
   --panel-gap: 44px;
 }
 
-html[data-theme="dark"]{ color-scheme: dark; }
-html[data-theme="dark"]:root{
-  --bg-a: #0b1220;
-  --bg-b: #0b1220;
-  --ink: rgba(255,255,255,0.92);
-  --muted: rgba(255,255,255,0.70);
-  --line: rgba(255,255,255,0.14);
-  --card: rgba(255,255,255,0.06);
-  --brand: #34d399;
-  --brand-dark: #10b981;
-  --accent: #34d399;
-}
+/* 다크모드 제거: 밝은 모드 고정 */
 
 * {
   box-sizing: border-box;
@@ -158,7 +147,7 @@ body {
   place-items:center;
   cursor:pointer;
 }
-html[data-theme="dark"] .theme-toggle{ background: rgba(255,255,255,0.06); }
+/* 다크모드 제거: 밝은 모드 고정 */
 
 .title {
   margin: 6px 0 0;
